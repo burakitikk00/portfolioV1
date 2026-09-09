@@ -24,6 +24,10 @@ body {
   overflow-y: hidden;
   background-color: #050505;
   color: #ededed;
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  -webkit-touch-callout: none;
 }
 
 .snap-section {
