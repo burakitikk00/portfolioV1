@@ -1,42 +1,42 @@
-"use client";
-
+import React, { memo } from "react";
 import { motion } from "framer-motion";
 import { Briefcase, GraduationCap, Award, Compass, ArrowUpRight } from "lucide-react";
+import Image from "next/image";
+
+const EXPERIENCES = [
+  {
+    company: "SUFFATECH",
+    role: "Web Yazılım Geliştirme Stajyeri",
+    date: "Haz 2024 - Ağu 2024",
+    url: "https://www.suffatech.com",
+    logo: "/suffatech.webp",
+    isCustomLogo: false,
+    desc: "Modern web teknolojileri, responsive arayüz mimarileri ve kullanıcı deneyimi odaklı frontend geliştirme süreçleri.",
+    tags: ["Next.js", "React", "TypeScript", "Frontend"],
+  },
+  {
+    company: "KASKİ Genel Müdürlüğü",
+    role: "Bilgi İşlem ve Ağ Stajyeri",
+    date: "Haz 2023 - Ağu 2023",
+    url: "https://www.kaski.gov.tr/",
+    logo: "/kaski.webp",
+    isCustomLogo: false,
+    desc: "Geniş ölçekli kurumsal ağ altyapısı, sunucu sistemleri, ağ güvenliği ve bilgi işlem operasyonel destek süreçleri.",
+    tags: ["Ağ Yönetimi", "Sistem Güvenliği", "Donanım", "IT Support"],
+  },
+  {
+    company: "Hilal Elektrik",
+    role: "Saha Operasyonları ve Elektrik Tesisat Sorumlusu",
+    date: "2018 - Devam Ediyor",
+    url: null,
+    logo: "HE",
+    isCustomLogo: true,
+    desc: "Teknik saha operasyonlarının yönetimi, şantiye koordinasyonu, karmaşık altyapı tesisatlarının planlanması ve teslimi.",
+    tags: ["Saha Operasyonları", "Proje Yönetimi", "Kriz Çözümü"],
+  },
+];
 
 export default function ExperienceSection() {
-  const experiences = [
-    {
-      company: "SUFFATECH",
-      role: "Web Yazılım Geliştirme Stajyeri",
-      date: "Haz 2024 - Ağu 2024",
-      url: "https://www.suffatech.com",
-      logo: "/suffatech.png",
-      isCustomLogo: false,
-      desc: "Modern web teknolojileri, responsive arayüz mimarileri ve kullanıcı deneyimi odaklı frontend geliştirme süreçleri.",
-      tags: ["Next.js", "React", "TypeScript", "Frontend"],
-    },
-    {
-      company: "KASKİ Genel Müdürlüğü",
-      role: "Bilgi İşlem ve Ağ Stajyeri",
-      date: "Haz 2023 - Ağu 2023",
-      url: "https://www.kaski.gov.tr/",
-      logo: "/kaski.png",
-      isCustomLogo: false,
-      desc: "Geniş ölçekli kurumsal ağ altyapısı, sunucu sistemleri, ağ güvenliği ve bilgi işlem operasyonel destek süreçleri.",
-      tags: ["Ağ Yönetimi", "Sistem Güvenliği", "Donanım", "IT Support"],
-    },
-    {
-      company: "Hilal Elektrik",
-      role: "Saha Operasyonları ve Elektrik Tesisat Sorumlusu",
-      date: "2018 - Devam Ediyor",
-      url: null,
-      logo: "HE",
-      isCustomLogo: true,
-      desc: "Teknik saha operasyonlarının yönetimi, şantiye koordinasyonu, karmaşık altyapı tesisatlarının planlanması ve teslimi.",
-      tags: ["Saha Operasyonları", "Proje Yönetimi", "Kriz Çözümü"],
-    },
-  ];
-
   return (
     <section
       id="experience"
@@ -75,7 +75,7 @@ export default function ExperienceSection() {
             </div>
 
             <div className="flex flex-col space-y-3.5">
-              {experiences.map((exp, idx) => {
+              {EXPERIENCES.map((exp, idx) => {
                 const ContentWrapper = exp.url ? "a" : "div";
                 return (
                   <motion.div
@@ -100,16 +100,18 @@ export default function ExperienceSection() {
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex items-start gap-4">
                           {/* Logo container */}
-                          <div className="w-12 h-12 rounded-xl bg-zinc-900 border border-white/10 flex items-center justify-center p-2 flex-shrink-0 group-hover:border-[#dfc3a2]/40 transition-colors overflow-hidden">
+                          <div className="w-12 h-12 rounded-xl bg-zinc-900 border border-white/10 flex items-center justify-center p-2 flex-shrink-0 group-hover:border-[#dfc3a2]/40 transition-colors overflow-hidden relative">
                             {exp.isCustomLogo ? (
                               <span className="text-xs font-mono font-bold text-[#dfc3a2]">
                                 {exp.logo}
                               </span>
                             ) : (
-                              <img
+                              <Image
                                 src={exp.logo}
                                 alt={exp.company}
-                                className="w-full h-full object-contain filter brightness-110"
+                                width={36}
+                                height={36}
+                                className="object-contain filter brightness-110"
                               />
                             )}
                           </div>

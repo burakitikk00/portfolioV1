@@ -66,10 +66,14 @@ export default function AboutMeSection() {
 
               {/* Portrait Image */}
               <div className="w-full h-full relative overflow-hidden bg-black">
-                <img
+                <Image
                   alt="Burak İtik Portre"
+                  src="/profilev2.webp"
+                  fill
+                  sizes="(max-width: 640px) 270px, (max-width: 1024px) 330px, 380px"
+                  loading="lazy"
+                  quality={85}
                   className="w-full h-full object-cover object-top transition-transform duration-700 ease-out group-hover:scale-110 filter brightness-95 contrast-105 group-hover:brightness-105"
-                  src="/profilev2.png"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/30 pointer-events-none"></div>
                 <div className="absolute inset-0 bg-scanlines opacity-20 pointer-events-none"></div>

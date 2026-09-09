@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, memo } from "react";
 import {
   motion,
   useScroll,
@@ -145,7 +145,7 @@ interface ServiceCardProps {
  * Sticky card that scales down (1 -> 0.95 -> 0.91 -> 0.87) and slightly dims as subsequent cards
  * scroll up and naturally overlap it like physical sheets on a desk.
  */
-function ServiceCard({
+const ServiceCard = memo(function ServiceCard({
   card,
   index,
   total,
@@ -245,7 +245,8 @@ function ServiceCard({
         opacity,
         filter: filterBrightness,
         transformOrigin: "top center",
-        willChange: "transform, opacity",
+        contentVisibility: "auto",
+        containIntrinsicSize: "520px",
       }}
       whileHover={{
         scale: 0.99,
@@ -376,7 +377,7 @@ function ServiceCard({
       </div>
     </motion.div>
   );
-}
+});
 
 export default function WhatIHelpSection() {
   const sectionRef = useRef<HTMLElement | null>(null);

@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ExternalLink, Github } from "lucide-react";
+import Image from "next/image";
 
 interface ProjectItem {
   id: number;
@@ -33,7 +34,7 @@ const PROJECTS: ProjectItem[] = [
     description:
       "Next.js 16 ile SSR destekli, NextAuth.js ile 2FA ve rol tabanlı yetkilendirme, Prisma ile karmaşık varyantlı ürün ağaçları, dinamik kupon motorları ve Shopier'den otomatik veri göçü içeren full-stack e-ticaret platformu.",
     tags: ["Next.js 16", "React 19", "Prisma", "PostgreSQL", "NextAuth.js", "Zustand"],
-    image: "/cantacim.png",
+    image: "/cantacim.webp",
     badge: "Concept 01 / Live",
     award: "Awarded Full-Stack • Production Ready",
     dotColor: "bg-[#ff3b30]",
@@ -213,6 +214,20 @@ export default function ProjectSliderSection() {
     };
   }, [handleScrollDelta]);
 
+  // JIT Image Preloading: proactively pre-cache adjacent project images
+  useEffect(() => {
+    const nextIdx = (currentSlide + 1) % totalSlides;
+    const prevIdx = (currentSlide - 1 + totalSlides) % totalSlides;
+    const preloadImg = (src: string) => {
+      if (typeof window !== "undefined" && src) {
+        const img = new window.Image();
+        img.src = src;
+      }
+    };
+    if (PROJECTS[nextIdx]?.image) preloadImg(PROJECTS[nextIdx].image);
+    if (PROJECTS[prevIdx]?.image) preloadImg(PROJECTS[prevIdx].image);
+  }, [currentSlide, totalSlides]);
+
   const goToSlide = (index: number) => {
     if (isTransitioningRef.current || index === currentSlide) return;
     isTransitioningRef.current = true;
@@ -304,17 +319,17 @@ export default function ProjectSliderSection() {
                 {/* Mobile Preview Image (Visible ONLY on mobile, directly under category) */}
                 <div className="lg:hidden w-full flex items-center justify-center my-1">
                   <div className="relative w-full max-w-[260px] sm:max-w-[320px] aspect-[16/9] rounded-xl overflow-hidden border border-white/10 shadow-xl bg-neutral-900">
-                    <img
+                    <Image
                       alt={project.title}
                       className="w-full h-full object-cover filter brightness-95 contrast-115"
                       src={project.image}
-                      loading="eager"
-                      onError={(e) => {
-                        (e.currentTarget as HTMLImageElement).src = "/cantacim.png";
-                      }}
+                      fill
+                      sizes="(max-width: 640px) 260px, 320px"
+                      priority={currentSlide === 0}
+                      loading={currentSlide === 0 ? "eager" : "lazy"}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 pointer-events-none"></div>
-                    <div className="absolute top-2 left-2 bg-black/70 backdrop-blur-md px-2 py-0.5 rounded text-[8.5px] font-mono uppercase tracking-wider text-neutral-300 border border-white/10">
+                    <div className="absolute top-2 left-2 bg-black/70 backdrop-blur-md px-2 py-0.5 rounded text-[8.5px] font-mono uppercase tracking-wider text-neutral-300 border border-white/10 z-10">
                       {project.badge}
                     </div>
                   </div>
@@ -377,20 +392,20 @@ export default function ProjectSliderSection() {
                 {/* Right Column: Visual Artwork Preview Banner (Desktop only) */}
                 <div className="hidden lg:flex lg:col-span-5 relative items-center justify-center">
                   <div className="relative w-full max-w-[360px] aspect-[4/3] rounded-xl overflow-hidden border border-white/10 shadow-2xl group bg-neutral-900">
-                    <img
+                    <Image
                       alt={project.title}
                       className="w-full h-full object-cover filter brightness-95 contrast-115 group-hover:scale-105 transition-all duration-700"
                       src={project.image}
-                      loading="eager"
-                      onError={(e) => {
-                        (e.currentTarget as HTMLImageElement).src = "/cantacim.png";
-                      }}
+                      fill
+                      sizes="(max-width: 1024px) 100vw, 360px"
+                      priority={currentSlide === 0}
+                      loading={currentSlide === 0 ? "eager" : "lazy"}
                     />
                     {/* Stylized vignette overlay */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 pointer-events-none"></div>
 
                     {/* Minimal Inner Badge */}
-                    <div className="absolute top-2.5 left-2.5 bg-black/70 backdrop-blur-md px-2.5 py-1 rounded text-[10px] font-mono uppercase tracking-wider text-neutral-300 border border-white/10">
+                    <div className="absolute top-2.5 left-2.5 bg-black/70 backdrop-blur-md px-2.5 py-1 rounded text-[10px] font-mono uppercase tracking-wider text-neutral-300 border border-white/10 z-10">
                       {project.badge}
                     </div>
                   </div>

@@ -1,72 +1,240 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, Suspense, lazy, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import HelloSection from "./components/HelloSection";
-import CreativeDevHero from "./components/CreativeDevHero";
-import AboutMeSection from "./components/AboutMeSection";
-import WhatIHelpSection from "./components/WhatIHelpSection";
-import ExperienceSection from "./components/ExperienceSection";
-import LiquidWorkSection from "./components/LiquidWorkSection";
-import ProjectSliderSection from "./components/ProjectSliderSection";
-import ContactSection from "./components/ContactSection";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { playHelloChime } from "./lib/sound";
 
 /**
+ * Predictive Dynamic Code-Splitting:
+ * Factories allow components to be fetched on-demand or preloaded in advance
+ */
+const slideFactories: Record<number, () => Promise<{ default: React.ComponentType<any> }>> = {
+  0: () => Promise.resolve({ default: HelloSection }),
+  1: () => import("./components/CreativeDevHero"),
+  2: () => import("./components/AboutMeSection"),
+  3: () => import("./components/WhatIHelpSection"),
+  4: () => import("./components/ExperienceSection"),
+  5: () => import("./components/LiquidWorkSection"),
+  6: () => import("./components/ProjectSliderSection"),
+  7: () => import("./components/ContactSection"),
+};
+
+// Global cache for preloaded import promises
+const preloadedSlidePromises: Record<number, Promise<{ default: React.ComponentType<any> }>> = {};
+
+export const preloadSlide = (index: number) => {
+  if (index < 0 || index > 7) return;
+  if (!preloadedSlidePromises[index] && slideFactories[index]) {
+    preloadedSlidePromises[index] = slideFactories[index]();
+  }
+  return preloadedSlidePromises[index];
+};
+
+// Lazy components that consume the preloaded promise
+const LazyCreativeDevHero = lazy(() => preloadSlide(1)!);
+const LazyAboutMeSection = lazy(() => preloadSlide(2)!);
+const LazyWhatIHelpSection = lazy(() => preloadSlide(3)!);
+const LazyExperienceSection = lazy(() => preloadSlide(4)!);
+const LazyLiquidWorkSection = lazy(() => preloadSlide(5)!);
+const LazyProjectSliderSection = lazy(() => preloadSlide(6)!);
+const LazyContactSection = lazy(() => preloadSlide(7)!);
+
+/**
  * Slide Definitions
- * Maps all 8 original sections into full-screen (100vh) slide components.
+ * Maps all 8 sections into full-screen (100vh) slide components.
  */
 const SLIDES = [
   {
     id: "hello",
     num: "01",
     name: "Giriş",
-    component: <HelloSection />,
+    Component: HelloSection,
   },
   {
     id: "creative-dev",
     num: "02",
     name: "Software Dev",
-    component: <CreativeDevHero />,
+    Component: LazyCreativeDevHero,
   },
   {
     id: "about",
     num: "03",
     name: "Hakkımda",
-    component: <AboutMeSection />,
+    Component: LazyAboutMeSection,
   },
   {
     id: "what-i-help",
     num: "04",
     name: "Yetenekler",
-    component: <WhatIHelpSection />,
+    Component: LazyWhatIHelpSection,
   },
   {
     id: "experience",
     num: "05",
     name: "Deneyimler",
-    component: <ExperienceSection />,
+    Component: LazyExperienceSection,
   },
   {
     id: "work",
     num: "06",
     name: "Work",
-    component: <LiquidWorkSection />,
+    Component: LazyLiquidWorkSection,
   },
   {
     id: "showcase",
     num: "07",
     name: "Projeler",
-    component: <ProjectSliderSection />,
+    Component: LazyProjectSliderSection,
   },
   {
     id: "contact",
     num: "08",
     name: "İletişim",
-    component: <ContactSection />,
+    Component: LazyContactSection,
   },
 ];
+
+function SlideFallback() {
+  return (
+    <div className="w-full h-full min-h-screen flex items-center justify-center bg-transparent pointer-events-none">
+      <div className="w-7 h-7 rounded-full border-2 border-[#dfc3a2]/20 border-t-[#dfc3a2] animate-spin" />
+    </div>
+  );
+}
+
+interface SlideRendererProps {
+  slideIndex: number;
+  onMountContainer: (el: HTMLDivElement | null) => void;
+}
+
+const SlideRenderer = memo(function SlideRenderer({
+  slideIndex,
+  onMountContainer,
+}: SlideRendererProps) {
+  const SlideComponent = SLIDES[slideIndex]?.Component || HelloSection;
+  return (
+    <div
+      ref={onMountContainer}
+      className="w-full h-full overflow-y-auto overflow-x-hidden no-scrollbar relative"
+    >
+      <Suspense fallback={<SlideFallback />}>
+        <SlideComponent />
+      </Suspense>
+    </div>
+  );
+});
+
+interface RubberbandMembraneProps {
+  bottomStretch: number;
+  currentSlideIndex: number;
+  totalSlides: number;
+  slideId: string;
+}
+
+const RubberbandMembrane = memo(function RubberbandMembrane({
+  bottomStretch,
+  currentSlideIndex,
+  totalSlides,
+  slideId,
+}: RubberbandMembraneProps) {
+  if (slideId === "hello" || slideId === "work" || slideId === "what-i-help") {
+    return null;
+  }
+
+  return (
+    <div
+      className="pointer-events-none fixed bottom-0 inset-x-0 z-40 flex flex-col items-center justify-end overflow-visible select-none transition-opacity duration-200"
+      style={{
+        opacity: bottomStretch > 0.03 ? 1 : 0,
+      }}
+      aria-hidden="true"
+    >
+      {/* Dynamic Curved SVG Membrane */}
+      <div
+        className="relative w-full overflow-visible flex items-end justify-center"
+        style={{
+          height: `${Math.max(bottomStretch * 72, 0)}px`,
+        }}
+      >
+        <svg
+          viewBox="0 0 1000 100"
+          preserveAspectRatio="none"
+          className="absolute inset-x-0 bottom-0 w-full h-full overflow-visible pointer-events-none"
+        >
+          <defs>
+            <linearGradient id="stretchGlowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#dfc3a2" stopOpacity={bottomStretch * 0.35} />
+              <stop offset="50%" stopColor="#dfc3a2" stopOpacity={bottomStretch * 0.12} />
+              <stop offset="100%" stopColor="#dfc3a2" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          {/* Elastic liquid membrane pull */}
+          <path
+            d={`M 0 100 Q 500 ${Math.max(100 - bottomStretch * 135, -35)} 1000 100 L 1000 100 L 0 100 Z`}
+            fill="url(#stretchGlowGrad)"
+          />
+          {/* Glowing boundary line */}
+          <path
+            d={`M 0 100 Q 500 ${Math.max(100 - bottomStretch * 135, -35)} 1000 100`}
+            fill="none"
+            stroke="#dfc3a2"
+            strokeWidth={1.5 + bottomStretch * 2.5}
+            strokeOpacity={0.35 + bottomStretch * 0.65}
+            style={{
+              filter: `drop-shadow(0 -3px 10px rgba(223, 195, 162, ${bottomStretch * 0.9}))`,
+            }}
+          />
+        </svg>
+
+        {/* Elastic Tension Release Indicator / Feedback Badge */}
+        <div
+          className="relative z-10 flex flex-col items-center gap-1 mb-2.5 sm:mb-3 transition-transform duration-100"
+          style={{
+            transform: `translateY(${Math.max((1 - bottomStretch) * 10, 0)}px)`,
+          }}
+        >
+          <div
+            className={`flex items-center gap-2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full backdrop-blur-md border transition-all duration-200 shadow-2xl ${
+              bottomStretch >= 0.88
+                ? "bg-[#dfc3a2] text-black border-[#dfc3a2] scale-105 font-bold shadow-[0_0_24px_rgba(223,195,162,0.9)]"
+                : "bg-[#121214]/95 text-[#dfc3a2] border-[#dfc3a2]/40"
+            }`}
+          >
+            <span
+              className={`w-1.5 h-1.5 rounded-full ${
+                bottomStretch >= 0.88 ? "bg-black animate-ping" : "bg-[#dfc3a2] animate-pulse"
+              }`}
+            />
+            <span className="text-[9px] sm:text-[10px] font-mono tracking-widest uppercase">
+              {currentSlideIndex === totalSlides - 1
+                ? "Son Sayfa"
+                : bottomStretch >= 0.88
+                ? "Bırakın // Geçiliyor"
+                : "Tutunun // Çekmeye Devam Edin"}
+            </span>
+            <ChevronDown
+              className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                bottomStretch >= 0.88 ? "translate-y-0.5 scale-125" : ""
+              }`}
+            />
+          </div>
+
+          {/* Micro Tension Progress Bar */}
+          {currentSlideIndex < totalSlides - 1 && (
+            <div className="w-24 sm:w-28 h-1 rounded-full bg-white/10 overflow-hidden border border-white/5 backdrop-blur-sm">
+              <div
+                className="h-full bg-gradient-to-r from-[#dfc3a2]/40 via-[#dfc3a2] to-white rounded-full transition-all duration-75"
+                style={{ width: `${Math.min(Math.round(bottomStretch * 100), 100)}%` }}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+});
 
 /**
  * Slide transition variants using the requested Apple-style Quintic ease curve [0.76, 0, 0.24, 1]
@@ -165,6 +333,7 @@ export default function Portfolio() {
    * Jump directly to a specific slide index
    */
   const goToSlide = useCallback((targetIndex: number) => {
+    preloadSlide(targetIndex);
     setSlideState(([current]) => {
       if (targetIndex === current) return [current, 0, current];
       if (current === 0 && targetIndex > 0) {
@@ -186,6 +355,7 @@ export default function Portfolio() {
       }
 
       if (newDirection > 0 && currentSlideIndex < SLIDES.length - 1) {
+        preloadSlide(currentSlideIndex + 1);
         if (currentSlideIndex === 0) {
           // Play classic nostalgic chime at the exact moment of passing hello slide
           playHelloChime();
@@ -197,6 +367,7 @@ export default function Portfolio() {
           isAnimatingRef.current = false;
         }, 900);
       } else if (newDirection < 0 && currentSlideIndex > 0) {
+        preloadSlide(currentSlideIndex - 1);
         isAnimatingRef.current = true;
         lastScrollTimeRef.current = now;
         paginate(-1);
@@ -235,6 +406,13 @@ export default function Portfolio() {
       const isHelloSlide = SLIDES[currentSlideIndex]?.id === "hello";
       const isWorkSlide = SLIDES[currentSlideIndex]?.id === "work";
       const isWhatIHelpSlide = SLIDES[currentSlideIndex]?.id === "what-i-help";
+
+      // Proactively pre-cache upcoming slide on wheel intent
+      if (isScrollingDown && currentSlideIndex < SLIDES.length - 1) {
+        preloadSlide(currentSlideIndex + 1);
+      } else if (!isScrollingDown && currentSlideIndex > 0) {
+        preloadSlide(currentSlideIndex - 1);
+      }
 
       // On HELLO slide: immediate smooth transition on any downward scroll with sound
       if (isHelloSlide && isScrollingDown) {
@@ -436,6 +614,7 @@ export default function Portfolio() {
         }
 
         if (isAtBottom && currentSlideIndex < SLIDES.length - 1) {
+          preloadSlide(currentSlideIndex + 1);
           const progress = Math.min(diffY / 130, 1);
           setBottomStretch(progress);
         }
@@ -619,7 +798,25 @@ export default function Portfolio() {
     setBottomStretch(0);
     overscrollYRef.current = 0;
     overscrollUpRef.current = 0;
+
+    // Predictive idle preloading: prefetch adjacent slides in advance
+    const timer = setTimeout(() => {
+      preloadSlide(currentSlideIndex + 1);
+      if (currentSlideIndex > 0) {
+        preloadSlide(currentSlideIndex - 1);
+      }
+    }, 180);
+    return () => clearTimeout(timer);
   }, [currentSlideIndex]);
+
+  const handleMountContainer = useCallback((el: HTMLDivElement | null) => {
+    if (el) {
+      if (el !== activeSlideContainerRef.current) {
+        el.scrollTop = 0;
+      }
+      activeSlideContainerRef.current = el;
+    }
+  }, []);
 
   return (
     <main className="fixed inset-0 w-full max-w-[100vw] h-screen overflow-x-hidden overflow-y-hidden bg-[#050505] text-[#ededed] select-none">
@@ -674,119 +871,23 @@ export default function Portfolio() {
               }}
               className="w-full h-full overflow-hidden"
             >
-              {/* Scrollable Container per slide */}
-              <div
-                ref={(el) => {
-                  if (el) {
-                    if (el !== activeSlideContainerRef.current) {
-                      el.scrollTop = 0;
-                    }
-                    activeSlideContainerRef.current = el;
-                  }
-                }}
-                className="w-full h-full overflow-y-auto overflow-x-hidden no-scrollbar relative"
-              >
-                {SLIDES[currentSlideIndex].component}
-              </div>
+              {/* Memoized Scrollable Container per slide - eliminates re-render of heavy slides during rubberband scroll */}
+              <SlideRenderer
+                slideIndex={currentSlideIndex}
+                onMountContainer={handleMountContainer}
+              />
             </motion.div>
           </motion.div>
         </AnimatePresence>
       </div>
 
       {/* Sündürme (Rubberband Stretch) Effect at the Bottom (Disabled on HELLO, WORK and WHAT-I-HELP pages) */}
-      {SLIDES[currentSlideIndex]?.id !== "hello" &&
-        SLIDES[currentSlideIndex]?.id !== "work" &&
-        SLIDES[currentSlideIndex]?.id !== "what-i-help" && (
-        <div
-          className="pointer-events-none fixed bottom-0 inset-x-0 z-40 flex flex-col items-center justify-end overflow-visible select-none transition-opacity duration-200"
-          style={{
-            opacity: bottomStretch > 0.03 ? 1 : 0,
-          }}
-          aria-hidden="true"
-        >
-          {/* Dynamic Curved SVG Membrane */}
-          <div
-            className="relative w-full overflow-visible flex items-end justify-center"
-            style={{
-              height: `${Math.max(bottomStretch * 72, 0)}px`,
-            }}
-          >
-            <svg
-              viewBox="0 0 1000 100"
-              preserveAspectRatio="none"
-              className="absolute inset-x-0 bottom-0 w-full h-full overflow-visible pointer-events-none"
-            >
-              <defs>
-                <linearGradient id="stretchGlowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#dfc3a2" stopOpacity={bottomStretch * 0.35} />
-                  <stop offset="50%" stopColor="#dfc3a2" stopOpacity={bottomStretch * 0.12} />
-                  <stop offset="100%" stopColor="#dfc3a2" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              {/* Elastic liquid membrane pull */}
-              <path
-                d={`M 0 100 Q 500 ${Math.max(100 - bottomStretch * 135, -35)} 1000 100 L 1000 100 L 0 100 Z`}
-                fill="url(#stretchGlowGrad)"
-              />
-              {/* Glowing boundary line */}
-              <path
-                d={`M 0 100 Q 500 ${Math.max(100 - bottomStretch * 135, -35)} 1000 100`}
-                fill="none"
-                stroke="#dfc3a2"
-                strokeWidth={1.5 + bottomStretch * 2.5}
-                strokeOpacity={0.35 + bottomStretch * 0.65}
-                style={{
-                  filter: `drop-shadow(0 -3px 10px rgba(223, 195, 162, ${bottomStretch * 0.9}))`,
-                }}
-              />
-            </svg>
-
-            {/* Elastic Tension Release Indicator / Feedback Badge */}
-            <div
-              className="relative z-10 flex flex-col items-center gap-1 mb-2.5 sm:mb-3 transition-transform duration-100"
-              style={{
-                transform: `translateY(${Math.max((1 - bottomStretch) * 10, 0)}px)`,
-              }}
-            >
-              <div
-                className={`flex items-center gap-2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full backdrop-blur-md border transition-all duration-200 shadow-2xl ${
-                  bottomStretch >= 0.88
-                    ? "bg-[#dfc3a2] text-black border-[#dfc3a2] scale-105 font-bold shadow-[0_0_24px_rgba(223,195,162,0.9)]"
-                    : "bg-[#121214]/95 text-[#dfc3a2] border-[#dfc3a2]/40"
-                }`}
-              >
-                <span
-                  className={`w-1.5 h-1.5 rounded-full ${
-                    bottomStretch >= 0.88 ? "bg-black animate-ping" : "bg-[#dfc3a2] animate-pulse"
-                  }`}
-                />
-                <span className="text-[9px] sm:text-[10px] font-mono tracking-widest uppercase">
-                  {currentSlideIndex === SLIDES.length - 1
-                    ? "Son Sayfa"
-                    : bottomStretch >= 0.88
-                    ? "Bırakın // Geçiliyor"
-                    : "Tutunun // Çekmeye Devam Edin"}
-                </span>
-                <ChevronDown
-                  className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                    bottomStretch >= 0.88 ? "translate-y-0.5 scale-125" : ""
-                  }`}
-                />
-              </div>
-
-              {/* Micro Tension Progress Bar */}
-              {currentSlideIndex < SLIDES.length - 1 && (
-                <div className="w-24 sm:w-28 h-1 rounded-full bg-white/10 overflow-hidden border border-white/5 backdrop-blur-sm">
-                  <div
-                    className="h-full bg-gradient-to-r from-[#dfc3a2]/40 via-[#dfc3a2] to-white rounded-full transition-all duration-75"
-                    style={{ width: `${Math.min(Math.round(bottomStretch * 100), 100)}%` }}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <RubberbandMembrane
+        bottomStretch={bottomStretch}
+        currentSlideIndex={currentSlideIndex}
+        totalSlides={SLIDES.length}
+        slideId={SLIDES[currentSlideIndex]?.id}
+      />
 
       {/* Subtle Vertical Pagination Indicator (Right Side) */}
       <aside
@@ -811,6 +912,8 @@ export default function Portfolio() {
               <button
                 key={slide.id}
                 onClick={() => goToSlide(idx)}
+                onMouseEnter={() => preloadSlide(idx)}
+                onFocus={() => preloadSlide(idx)}
                 aria-label={`Bölüm ${slide.num}: ${slide.name}`}
                 aria-current={isActive ? "step" : undefined}
                 className="group relative flex items-center justify-center p-1 cursor-pointer focus:outline-none"
