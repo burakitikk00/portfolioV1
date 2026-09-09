@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     "PostgreSQL",
   ],
   icons: {
-    icon: "/profile.jpeg",
+    icon: "/profilev2.png",
   },
   openGraph: {
     title: "Burak İtik | Bilgisayar Mühendisi & Full-Stack Developer",

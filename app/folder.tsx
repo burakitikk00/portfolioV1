@@ -153,6 +153,13 @@ export default function Portfolio() {
     [currentSlideIndex, paginate]
   );
 
+  // Track slide direction globally so nested sliders know which edge was entered from
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      (window as unknown as { __portfolioSlideDirection?: number }).__portfolioSlideDirection = direction;
+    }
+  }, [direction]);
+
   /**
    * 1. Mouse Wheel Handler with momentum & internal scroll detection
    */
@@ -162,6 +169,13 @@ export default function Portfolio() {
       if (Math.abs(e.deltaY) < 18) return;
 
       const delta = e.deltaY > 0 ? 1 : -1;
+
+      // Check if project showcase handler is active and handles the scroll
+      const win = window as unknown as { __portfolioProjectScrollHandler?: ((d: number) => boolean) | null };
+      if (win.__portfolioProjectScrollHandler) {
+        const handled = win.__portfolioProjectScrollHandler(delta);
+        if (handled) return;
+      }
 
       // Check if current active slide has internal scrollable content (e.g., WhatIHelp card stacks)
       const container = activeSlideContainerRef.current;
@@ -212,6 +226,16 @@ export default function Portfolio() {
       if (Math.abs(diffY) > Math.abs(diffX) && Math.abs(diffY) > 45) {
         const delta = diffY > 0 ? 1 : -1;
 
+        const win = window as unknown as { __portfolioProjectScrollHandler?: ((d: number) => boolean) | null };
+        if (win.__portfolioProjectScrollHandler) {
+          const handled = win.__portfolioProjectScrollHandler(delta);
+          if (handled) {
+            touchStartYRef.current = null;
+            touchStartXRef.current = null;
+            return;
+          }
+        }
+
         const container = activeSlideContainerRef.current;
         if (container) {
           const { scrollTop, scrollHeight, clientHeight } = container;
@@ -257,9 +281,25 @@ export default function Portfolio() {
       }
 
       if (e.key === "ArrowDown" || e.key === "PageDown" || e.code === "Space") {
+        const win = window as unknown as { __portfolioProjectScrollHandler?: ((d: number) => boolean) | null };
+        if (win.__portfolioProjectScrollHandler) {
+          const handled = win.__portfolioProjectScrollHandler(1);
+          if (handled) {
+            e.preventDefault();
+            return;
+          }
+        }
         e.preventDefault();
         triggerSlideChange(1);
       } else if (e.key === "ArrowUp" || e.key === "PageUp") {
+        const win = window as unknown as { __portfolioProjectScrollHandler?: ((d: number) => boolean) | null };
+        if (win.__portfolioProjectScrollHandler) {
+          const handled = win.__portfolioProjectScrollHandler(-1);
+          if (handled) {
+            e.preventDefault();
+            return;
+          }
+        }
         e.preventDefault();
         triggerSlideChange(-1);
       } else if (e.key === "Home") {

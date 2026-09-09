@@ -69,7 +69,7 @@ export default function AboutMeSection() {
                 <img
                   alt="Burak İtik Portre"
                   className="w-full h-full object-cover object-top transition-transform duration-700 ease-out group-hover:scale-110 filter brightness-95 contrast-105 group-hover:brightness-105"
-                  src="/profile.jpeg"
+                  src="/profilev2.png"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/30 pointer-events-none"></div>
                 <div className="absolute inset-0 bg-scanlines opacity-20 pointer-events-none"></div>
