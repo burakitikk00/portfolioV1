@@ -60,7 +60,7 @@ export default function Preloader() {
           <div className="flex items-center justify-between font-mono text-[10px] sm:text-xs tracking-[0.2em] sm:tracking-[0.28em] text-zinc-500 uppercase">
             <div className="flex items-center gap-2 sm:gap-2.5">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span className="text-zinc-400">BURAK İTİK // PORTFOLIO</span>
+              <span className="text-zinc-400">BURAK İTİK {"//"} PORTFOLIO</span>
             </div>
             <span className="hidden sm:inline-block text-zinc-600">
               INITIALIZING CREATIVE ENGINE
