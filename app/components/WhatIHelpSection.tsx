@@ -598,6 +598,10 @@ export default function WhatIHelpSection() {
               { name: "Electron.js", color: "hover:border-indigo-500/50 hover:text-indigo-400" },
               { name: "Zustand", color: "hover:border-rose-500/50 hover:text-rose-400" },
               { name: "Git / GitHub", color: "hover:border-purple-500/50 hover:text-purple-400" },
+              { name: "C#", color: "hover:border-purple-500/50 hover:text-purple-400" },
+              { name: "asp.net core", color: "hover:border-purple-500/50 hover:text-purple-400" },
+              { name: "EF Core", color: "hover:border-purple-500/50 hover:text-purple-400" },
+              { name: "ASP.NET", color: "hover:border-purple-500/50 hover:text-purple-400" }
             ].map((tech, i) => (
               <span
                 key={i}

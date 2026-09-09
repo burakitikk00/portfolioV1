@@ -84,7 +84,7 @@ export default function AboutMeSection() {
                     </p>
                     <h3 className="text-xl md:text-2xl font-tech font-bold text-white tracking-wider flex items-center gap-2">
                       BURAK İTİK
-                      
+
                     </h3>
                   </div>
                   <div className="text-right">
@@ -105,7 +105,7 @@ export default function AboutMeSection() {
                   </div>
                   <div>
                     <span className="block text-[#E3C896]/60 text-[8px]">UZMANLIK</span>
-                    <span className="text-white font-semibold">ERP & MİMARİ</span>
+                    <span className="text-white font-semibold">MİMARİ TASARIM</span>
                   </div>
                 </div>
 
@@ -136,10 +136,10 @@ export default function AboutMeSection() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-5 text-xs sm:text-[13px] leading-relaxed text-zinc-300 font-sans pt-1 text-center md:text-left">
               <p className="border-l-0 md:border-l border-white/10 pl-0 md:pl-3">
-                Erciyes Üniversitesi Bilgisayar Mühendisliği mezunuyum. Yazılım geliştirme, ERP (Netsim N4) ve modern web teknolojilerinde edindiğim yetkinliklerle projeler geliştiriyorum.
+                Erciyes Üniversitesi Bilgisayar Mühendisliği mezunuyum. Yazılım geliştirme, ERP  ve modern web teknolojilerinde edindiğim yetkinliklerle projeler geliştiriyorum.
               </p>
               <p className="border-l-0 md:border-l border-white/10 pl-0 md:pl-3">
-                2 farklı kurumda staj yaptım (Suffatech & KASKİ), lisans eğitimimi tamamladım ve 4+ proje geliştirdim. Karmaşık problemleri çözme yeteneğim ve yenilikçi yaklaşımlarımla en güncel teknolojilere hızla adapte oluyorum.
+                2 farklı kurumda staj yaptım (Suffatech & KASKİ), lisans eğitimimi tamamladım ve 10+ proje geliştirdim. Karmaşık problemleri çözme yeteneğim ve yenilikçi yaklaşımlarımla en güncel teknolojilere hızla adapte oluyorum.
               </p>
             </div>
 
@@ -180,7 +180,7 @@ export default function AboutMeSection() {
                     PROJELER
                   </span>
                   <p className="text-[#E3C896] text-[11px] sm:text-[12px] font-bold tracking-wider mt-0.5">
-                    4+ TAMAMLANAN
+                    10+ TAMAMLANAN
                   </p>
                 </div>
               </div>
