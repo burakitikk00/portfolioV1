@@ -83,13 +83,13 @@ export default function CreativeDevHero() {
           className="w-full text-center flex flex-col items-center justify-center max-w-7xl mx-auto px-2"
         >
           <h1
-            className="font-hero text-[clamp(2.2rem,11.5vw,13.5rem)] font-black uppercase text-[#111111] leading-[0.88] tracking-tight block py-0 my-0 max-w-full whitespace-nowrap"
+            className="font-hero text-[clamp(3.8rem,16vw,6rem)] sm:text-[clamp(5rem,13vw,8.5rem)] md:text-[clamp(6.5rem,11.5vw,13.5rem)] font-black uppercase text-[#111111] leading-[0.88] tracking-tight block py-0 my-0 max-w-full whitespace-nowrap"
             style={{ transform: "scaleY(1.16)", transformOrigin: "center" }}
           >
             <AnimatedText text="SOFTWARE" delay={0.1} />
           </h1>
 
-          <div className="relative flex items-center justify-center -mt-[1.5vw] sm:-mt-[1vw]">
+          <div className="relative flex items-center justify-center -mt-1 sm:-mt-[1vw]">
             <motion.span
               initial={{ scale: 0, opacity: 0 }}
               whileInView={{ scale: 1, opacity: 1 }}
@@ -98,7 +98,7 @@ export default function CreativeDevHero() {
               className="hidden sm:inline-block w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-[#111111] mr-3 sm:mr-4 mb-1.5"
             />
             <span
-              className="font-hero text-[clamp(1.5rem,8vw,8rem)] font-black uppercase text-[#111111] leading-[0.88] tracking-normal whitespace-nowrap"
+              className="font-hero text-[clamp(3rem,12.5vw,4.8rem)] sm:text-[clamp(3.8rem,10vw,6.5rem)] md:text-[clamp(4.5rem,8vw,8rem)] font-black uppercase text-[#111111] leading-[0.88] tracking-normal whitespace-nowrap"
               style={{ transform: "scaleY(1.16)", transformOrigin: "center" }}
             >
               <AnimatedText text="DEVELOPER" delay={0.3} />
@@ -128,16 +128,16 @@ export default function CreativeDevHero() {
         style={{ y: footerY, opacity: footerOpacity, willChange: "transform, opacity" }}
         className="w-full pb-2 sm:pb-4 flex flex-col md:flex-row items-center justify-between gap-3 sm:gap-5 md:gap-0 z-20 text-[10px] sm:text-[11px] tracking-[0.18em] uppercase text-[#111111] text-center md:text-left"
       >
-        {/* Footer Left */}
-        <div className="w-full md:w-1/3 flex items-center justify-center md:justify-start space-x-2 order-2 md:order-1">
+        {/* Footer Left: 2026 burak itik (Mobile: Order 3 / en alt, Desktop: Order 1) */}
+        <div className="w-full md:w-1/3 flex items-center justify-center md:justify-start space-x-2 order-3 md:order-1">
           <span className="font-medium text-black">© 2026</span>
           <span className="font-signature text-xl normal-case font-bold tracking-normal">
             burak itik
           </span>
         </div>
 
-        {/* Footer Center: Scroll to explore */}
-        <div className="w-full md:w-1/3 flex flex-col items-center justify-center order-1 md:order-2">
+        {/* Footer Center: Scroll to explore (Mobile: Order 2 / ortada, Desktop: Order 2) */}
+        <div className="w-full md:w-1/3 flex flex-col items-center justify-center order-2 md:order-2">
           <a
             className="flex flex-col items-center space-y-1 group cursor-pointer text-[#111111] font-semibold"
             href="#about"
@@ -160,10 +160,10 @@ export default function CreativeDevHero() {
           </a>
         </div>
 
-        {/* Footer Right: Rotating Stamp Badge */}
+        {/* Footer Right: Rotating Stamp Badge (Mobile: Order 1 / en üst, Desktop: Order 3) */}
         <motion.div
           style={{ scale: badgeScale, willChange: "transform" }}
-          className="w-full md:w-1/3 flex flex-col items-center md:items-end justify-center order-3"
+          className="w-full md:w-1/3 flex flex-col items-center md:items-end justify-center order-1 md:order-3"
         >
           <a
             aria-label="Birlikte çalışalım"
