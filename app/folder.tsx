@@ -26,7 +26,7 @@ const SLIDES = [
   {
     id: "creative-dev",
     num: "02",
-    name: "Creative Dev",
+    name: "Software Dev",
     component: <CreativeDevHero />,
   },
   {
@@ -170,8 +170,15 @@ export default function Portfolio() {
 
       const delta = e.deltaY > 0 ? 1 : -1;
 
-      // Check if project showcase handler is active and handles the scroll
-      const win = window as unknown as { __portfolioProjectScrollHandler?: ((d: number) => boolean) | null };
+      // Check if project showcase or work cord pull handlers are active
+      const win = window as unknown as {
+        __portfolioProjectScrollHandler?: ((d: number) => boolean) | null;
+        __portfolioWorkScrollHandler?: ((d: number) => boolean) | null;
+      };
+      if (win.__portfolioWorkScrollHandler) {
+        const handled = win.__portfolioWorkScrollHandler(delta);
+        if (handled) return;
+      }
       if (win.__portfolioProjectScrollHandler) {
         const handled = win.__portfolioProjectScrollHandler(delta);
         if (handled) return;
@@ -226,7 +233,18 @@ export default function Portfolio() {
       if (Math.abs(diffY) > Math.abs(diffX) && Math.abs(diffY) > 45) {
         const delta = diffY > 0 ? 1 : -1;
 
-        const win = window as unknown as { __portfolioProjectScrollHandler?: ((d: number) => boolean) | null };
+        const win = window as unknown as {
+          __portfolioProjectScrollHandler?: ((d: number) => boolean) | null;
+          __portfolioWorkScrollHandler?: ((d: number) => boolean) | null;
+        };
+        if (win.__portfolioWorkScrollHandler) {
+          const handled = win.__portfolioWorkScrollHandler(delta);
+          if (handled) {
+            touchStartYRef.current = null;
+            touchStartXRef.current = null;
+            return;
+          }
+        }
         if (win.__portfolioProjectScrollHandler) {
           const handled = win.__portfolioProjectScrollHandler(delta);
           if (handled) {
@@ -280,8 +298,19 @@ export default function Portfolio() {
         return;
       }
 
+      const win = window as unknown as {
+        __portfolioProjectScrollHandler?: ((d: number) => boolean) | null;
+        __portfolioWorkScrollHandler?: ((d: number) => boolean) | null;
+      };
+
       if (e.key === "ArrowDown" || e.key === "PageDown" || e.code === "Space") {
-        const win = window as unknown as { __portfolioProjectScrollHandler?: ((d: number) => boolean) | null };
+        if (win.__portfolioWorkScrollHandler) {
+          const handled = win.__portfolioWorkScrollHandler(1);
+          if (handled) {
+            e.preventDefault();
+            return;
+          }
+        }
         if (win.__portfolioProjectScrollHandler) {
           const handled = win.__portfolioProjectScrollHandler(1);
           if (handled) {
@@ -292,7 +321,13 @@ export default function Portfolio() {
         e.preventDefault();
         triggerSlideChange(1);
       } else if (e.key === "ArrowUp" || e.key === "PageUp") {
-        const win = window as unknown as { __portfolioProjectScrollHandler?: ((d: number) => boolean) | null };
+        if (win.__portfolioWorkScrollHandler) {
+          const handled = win.__portfolioWorkScrollHandler(-1);
+          if (handled) {
+            e.preventDefault();
+            return;
+          }
+        }
         if (win.__portfolioProjectScrollHandler) {
           const handled = win.__portfolioProjectScrollHandler(-1);
           if (handled) {

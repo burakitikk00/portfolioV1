@@ -10,6 +10,11 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        'gold-champagne': '#ddbf92',
+        'gold-champagne-light': '#ebd6b3',
+        'gold-champagne-dark': '#bfa06f',
+        'dark-bg': '#0a0a0c',
+        'charcoal': '#121214',
         brand: {
           cream: "#dfc3a2",
           creamLight: "#faeade",

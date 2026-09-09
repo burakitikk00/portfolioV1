@@ -378,14 +378,7 @@ export default function ProjectSliderSection() {
                 <p className="text-[10px] sm:text-[11px] font-mono text-neutral-500 max-w-sm sm:max-w-md line-clamp-1">
                   {project.summary}
                 </p>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="w-2.5 h-2.5 rounded-full bg-red-600/80 inline-flex items-center justify-center">
-                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
-                  </span>
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-neutral-400">
-                    {project.award}
-                  </span>
-                </div>
+
               </div>
             </motion.article>
           </AnimatePresence>

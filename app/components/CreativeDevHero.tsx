@@ -86,7 +86,7 @@ export default function CreativeDevHero() {
             className="font-hero text-[clamp(3.5rem,min(15vw,18vh),13.5rem)] font-black uppercase text-[#111111] leading-[0.88] tracking-tight block py-0 my-0"
             style={{ transform: "scaleY(1.16)", transformOrigin: "center" }}
           >
-            <AnimatedText text="CREATIVE" delay={0.1} />
+            <AnimatedText text="SOFTWARE" delay={0.1} />
           </h1>
 
           <div className="relative flex items-center justify-center -mt-[1.5vw] sm:-mt-[1vw]">
