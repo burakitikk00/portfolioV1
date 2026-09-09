@@ -252,16 +252,16 @@ function ServiceCard({
         transition: { type: "spring", stiffness: 400, damping: 28 },
       }}
       onClick={() => onSelect(index)}
-      className={`sticky w-full max-w-5xl mx-auto rounded-[28px] sm:rounded-3xl p-6 sm:p-8 lg:p-10 flex flex-col justify-between select-none cursor-pointer transition-shadow duration-500 ${
+      className={`sticky w-full max-w-5xl mx-auto rounded-[28px] sm:rounded-3xl p-6 sm:p-7 lg:px-9 lg:py-6 xl:px-10 xl:py-7 flex flex-col justify-between select-none cursor-pointer transition-shadow duration-500 ${
         index > 0 ? "mt-[24vh] sm:mt-[28vh]" : "mt-0"
       } ${
         card.isHighlighted
           ? "bg-zinc-900 border border-red-500/40 border-t-red-400/80 shadow-[0_-16px_36px_rgba(229,27,36,0.22),0_24px_60px_rgba(0,0,0,0.95)]"
           : "bg-zinc-900 border border-zinc-800/90 border-t-zinc-600/50 shadow-[0_-18px_38px_rgba(0,0,0,0.85),0_25px_60px_rgba(0,0,0,0.95)]"
-      } min-h-[480px] h-[60vh] sm:h-[64vh] max-h-[660px]`}
+      } min-h-[480px] sm:min-h-[500px] lg:min-h-[490px] xl:min-h-[520px] h-auto`}
     >
       {/* Top Header Row of the Card */}
-      <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3 sm:pb-5">
+      <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3 sm:pb-4 lg:pb-3.5 xl:pb-4">
         <div className="flex items-center gap-2.5 sm:gap-3.5">
           <div
             className={`w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl flex items-center justify-center border shadow-inner transition-transform duration-300 group-hover:scale-105 ${accentBadge}`}
@@ -303,24 +303,24 @@ function ServiceCard({
       </div>
 
       {/* Main Content Body */}
-      <div className="my-auto py-3 sm:py-6 grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-10 items-center">
+      <div className="my-auto py-3 sm:py-4 lg:py-3 xl:py-4 grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8 xl:gap-10 items-center">
         {/* Left Column: Title & Description */}
         <div className="lg:col-span-7 flex flex-col justify-center text-center lg:text-left items-center lg:items-start">
-          <h3 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-extrabold tracking-tight text-white leading-[1.14]">
+          <h3 className="text-xl sm:text-2xl lg:text-[26px] xl:text-3xl font-extrabold tracking-tight text-white leading-[1.16]">
             {card.title}
           </h3>
 
-          <p className="mt-2.5 sm:mt-3.5 text-zinc-300 text-xs sm:text-sm md:text-[15px] leading-relaxed max-w-xl line-clamp-3 sm:line-clamp-none">
+          <p className="mt-2 sm:mt-2.5 text-zinc-300 text-xs sm:text-sm md:text-[14px] leading-relaxed max-w-xl line-clamp-3 sm:line-clamp-none">
             {card.description}
           </p>
 
-          <div className="mt-2.5 sm:mt-4 inline-flex items-center gap-2 text-[11px] sm:text-xs font-mono text-red-400">
+          <div className="mt-2 sm:mt-3 inline-flex items-center gap-2 text-[11px] sm:text-xs font-mono text-red-400">
             <span className="text-zinc-600 font-bold">›</span>
             <span className="text-zinc-400">{card.subtitle}</span>
           </div>
 
           {/* Technology Badges */}
-          <div className="flex flex-wrap items-center justify-center lg:justify-start gap-1.5 sm:gap-2 mt-4 sm:mt-6">
+          <div className="flex flex-wrap items-center justify-center lg:justify-start gap-1.5 sm:gap-2 mt-3.5 sm:mt-4 xl:mt-5">
             {card.tags.map((tag, tIdx) => (
               <span
                 key={tIdx}
@@ -333,8 +333,8 @@ function ServiceCard({
         </div>
 
         {/* Right Column: Architectural Highlights Glass Panel */}
-        <div className="lg:col-span-5 hidden lg:flex flex-col justify-between bg-zinc-950/80 border border-zinc-800/90 rounded-2xl p-5 shadow-inner">
-          <div className="flex items-center justify-between border-b border-zinc-850 pb-3 mb-3">
+        <div className="lg:col-span-5 hidden lg:flex flex-col justify-between bg-zinc-950/80 border border-zinc-800/90 rounded-2xl p-4 xl:p-5 shadow-inner">
+          <div className="flex items-center justify-between border-b border-zinc-850 pb-2.5 mb-2.5 xl:pb-3 xl:mb-3">
             <div className="flex items-center gap-2 text-xs font-mono tracking-wider text-zinc-400 uppercase font-semibold">
               <Terminal className="w-3.5 h-3.5 text-red-500" />
               <span>Mimari Kabiliyetler</span>
@@ -344,7 +344,7 @@ function ServiceCard({
             </span>
           </div>
 
-          <div className="space-y-2.5 my-2">
+          <div className="space-y-2 xl:space-y-2.5 my-1.5 xl:my-2">
             {card.capabilities.map((cap, capIdx) => (
               <div key={capIdx} className="flex items-start gap-2.5 text-xs text-zinc-300 leading-relaxed">
                 <CheckCircle2 className="w-3.5 h-3.5 text-red-500 flex-shrink-0 mt-0.5" />
@@ -353,7 +353,7 @@ function ServiceCard({
             ))}
           </div>
 
-          <div className="mt-4 pt-3 border-t border-zinc-850 flex items-center justify-between text-[11px] font-mono text-zinc-400">
+          <div className="mt-3 xl:mt-4 pt-2.5 xl:pt-3 border-t border-zinc-850 flex items-center justify-between text-[11px] font-mono text-zinc-400">
             <span>Metrik Değeri</span>
             <span className="text-zinc-200 font-semibold">{card.metric.label}</span>
           </div>
@@ -361,7 +361,7 @@ function ServiceCard({
       </div>
 
       {/* Bottom Footer Row */}
-      <div className="pt-3 sm:pt-5 border-t border-zinc-800/80 flex items-center justify-between">
+      <div className="pt-3 sm:pt-4 lg:pt-3.5 xl:pt-4 border-t border-zinc-800/80 flex items-center justify-between mt-auto">
         <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-mono text-zinc-400">
           <Sparkles className="w-3.5 h-3.5 text-red-500" />
           <span>Katman 0{index + 1} / 0{total}</span>

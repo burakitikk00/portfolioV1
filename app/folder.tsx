@@ -11,6 +11,7 @@ import LiquidWorkSection from "./components/LiquidWorkSection";
 import ProjectSliderSection from "./components/ProjectSliderSection";
 import ContactSection from "./components/ContactSection";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { playHelloChime } from "./lib/sound";
 
 /**
  * Slide Definitions
@@ -69,33 +70,68 @@ const SLIDES = [
 
 /**
  * Slide transition variants using the requested Apple-style Quintic ease curve [0.76, 0, 0.24, 1]
+ * Supports both standard vertical fullpage slides AND surprise horizontal sliding between Work and Showcase!
  */
 const slideVariants = {
-  enter: (direction: number) => ({
-    y: direction > 0 ? "100%" : "-100%",
-    opacity: 0,
-  }),
-  center: {
-    y: "0%",
-    opacity: 1,
-    transition: {
-      y: { type: "tween", ease: [0.76, 0, 0.24, 1], duration: 0.75 },
-      opacity: { duration: 0.4, ease: "easeOut" },
-    },
+  enter: (custom: any) => {
+    const direction = typeof custom === "number" ? custom : custom?.direction || 0;
+    const isHorizontal = Boolean(custom?.isHorizontal);
+    return {
+      x: isHorizontal ? (direction > 0 ? "100%" : "-100%") : "0%",
+      y: isHorizontal ? "0%" : direction > 0 ? "100%" : "-100%",
+      opacity: 0,
+      scale: isHorizontal ? 0.98 : 1,
+    };
   },
-  exit: (direction: number) => ({
-    y: direction > 0 ? "-35%" : "35%",
-    opacity: 0,
-    transition: {
-      y: { type: "tween", ease: [0.76, 0, 0.24, 1], duration: 0.4 },
-      opacity: { duration: 0.35, ease: "easeIn" },
-    },
-  }),
+  center: (custom: any) => {
+    const isHorizontal = Boolean(custom?.isHorizontal);
+    return {
+      x: "0%",
+      y: "0%",
+      opacity: 1,
+      scale: 1,
+      transition: {
+        x: isHorizontal
+          ? { type: "tween", ease: [0.76, 0, 0.24, 1], duration: 0.8 }
+          : { duration: 0 },
+        y: isHorizontal
+          ? { duration: 0 }
+          : { type: "tween", ease: [0.76, 0, 0.24, 1], duration: 0.75 },
+        opacity: { duration: 0.4, ease: "easeOut" },
+        scale: { duration: 0.75, ease: [0.76, 0, 0.24, 1] },
+      },
+    };
+  },
+  exit: (custom: any) => {
+    const direction = typeof custom === "number" ? custom : custom?.direction || 0;
+    const isHorizontal = Boolean(custom?.isHorizontal);
+    return {
+      x: isHorizontal ? (direction > 0 ? "-100%" : "100%") : "0%",
+      y: isHorizontal ? "0%" : direction > 0 ? "-35%" : "35%",
+      opacity: 0,
+      scale: isHorizontal ? 0.95 : 1,
+      transition: {
+        x: isHorizontal
+          ? { type: "tween", ease: [0.76, 0, 0.24, 1], duration: 0.8 }
+          : { duration: 0 },
+        y: isHorizontal
+          ? { duration: 0 }
+          : { type: "tween", ease: [0.76, 0, 0.24, 1], duration: 0.4 },
+        opacity: { duration: 0.35, ease: "easeIn" },
+        scale: { duration: 0.75 },
+      },
+    };
+  },
 };
 
 export default function Portfolio() {
-  // State: [currentSlideIndex, direction (-1 for up, +1 for down)]
-  const [[currentSlideIndex, direction], setSlideState] = useState<[number, number]>([0, 0]);
+  // State: [currentSlideIndex, direction (-1 for up, +1 for down), prevSlideIndex]
+  const [[currentSlideIndex, direction, prevSlideIndex], setSlideState] = useState<[number, number, number]>([0, 0, 0]);
+
+  // Check if transition between Work (index 5) and Showcase (index 6) should be horizontal
+  const isHorizontal =
+    (prevSlideIndex === 5 && currentSlideIndex === 6) ||
+    (prevSlideIndex === 6 && currentSlideIndex === 5);
 
   // Stretch / rubberband state (0 to 1) for bottom edge transition
   const [bottomStretch, setBottomStretch] = useState(0);
@@ -119,9 +155,9 @@ export default function Portfolio() {
     setSlideState(([current]) => {
       const nextIndex = current + newDirection;
       if (nextIndex < 0 || nextIndex >= SLIDES.length) {
-        return [current, 0];
+        return [current, 0, current];
       }
-      return [nextIndex, newDirection];
+      return [nextIndex, newDirection, current];
     });
   }, []);
 
@@ -130,9 +166,12 @@ export default function Portfolio() {
    */
   const goToSlide = useCallback((targetIndex: number) => {
     setSlideState(([current]) => {
-      if (targetIndex === current) return [current, 0];
+      if (targetIndex === current) return [current, 0, current];
+      if (current === 0 && targetIndex > 0) {
+        playHelloChime();
+      }
       const newDir = targetIndex > current ? 1 : -1;
-      return [targetIndex, newDir];
+      return [targetIndex, newDir, current];
     });
   }, []);
 
@@ -148,10 +187,8 @@ export default function Portfolio() {
 
       if (newDirection > 0 && currentSlideIndex < SLIDES.length - 1) {
         if (currentSlideIndex === 0) {
-          const win = window as unknown as { __portfolioPlayHelloChime?: () => void };
-          if (typeof win.__portfolioPlayHelloChime === "function") {
-            win.__portfolioPlayHelloChime();
-          }
+          // Play classic nostalgic chime at the exact moment of passing hello slide
+          playHelloChime();
         }
         isAnimatingRef.current = true;
         lastScrollTimeRef.current = now;
@@ -195,8 +232,17 @@ export default function Portfolio() {
 
       const isScrollingDown = e.deltaY > 0;
       const delta = isScrollingDown ? 1 : -1;
+      const isHelloSlide = SLIDES[currentSlideIndex]?.id === "hello";
       const isWorkSlide = SLIDES[currentSlideIndex]?.id === "work";
       const isWhatIHelpSlide = SLIDES[currentSlideIndex]?.id === "what-i-help";
+
+      // On HELLO slide: immediate smooth transition on any downward scroll with sound
+      if (isHelloSlide && isScrollingDown) {
+        overscrollYRef.current = 0;
+        setBottomStretch(0);
+        triggerSlideChange(1);
+        return;
+      }
 
       // Check if project showcase is active
       const win = window as unknown as {
@@ -248,6 +294,16 @@ export default function Portfolio() {
 
         if (isAtTop && currentSlideIndex > 0) {
           if (isWorkSlide) {
+            const win = window as unknown as {
+              __portfolioWorkScrollHandler?: ((d: number, rawDeltaY: number) => boolean) | null;
+            };
+            if (win.__portfolioWorkScrollHandler) {
+              const handled = win.__portfolioWorkScrollHandler(-1, e.deltaY);
+              if (handled) {
+                overscrollUpRef.current = 0;
+                return;
+              }
+            }
             overscrollUpRef.current = 0;
             triggerSlideChange(-1);
           } else {
@@ -271,8 +327,27 @@ export default function Portfolio() {
         // If animation is in progress, ignore
         if (isAnimatingRef.current) return;
 
-        // On WORK and WHAT-I-HELP slides: smooth immediate transition to next section without upward drag/tutunma
-        if (isWorkSlide || isWhatIHelpSlide) {
+        // On WORK slide: physically pull the cord down via scroll physics
+        if (isWorkSlide) {
+          const win = window as unknown as {
+            __portfolioWorkScrollHandler?: ((d: number, rawDeltaY: number) => boolean) | null;
+          };
+          if (win.__portfolioWorkScrollHandler) {
+            const handled = win.__portfolioWorkScrollHandler(1, e.deltaY);
+            if (handled) {
+              overscrollYRef.current = 0;
+              setBottomStretch(0);
+              return;
+            }
+          }
+          overscrollYRef.current = 0;
+          setBottomStretch(0);
+          triggerSlideChange(1);
+          return;
+        }
+
+        // On WHAT-I-HELP slide: smooth immediate transition to next section without upward drag/tutunma
+        if (isWhatIHelpSlide) {
           overscrollYRef.current = 0;
           setBottomStretch(0);
           triggerSlideChange(1);
@@ -342,8 +417,12 @@ export default function Portfolio() {
       const diffY = touchStartYRef.current - touchY;
       const diffX = Math.abs(touchStartXRef.current - touchX);
 
-      // On WORK and WHAT-I-HELP slides: no bottom stretch / tutunma effect
-      if (SLIDES[currentSlideIndex]?.id === "work" || SLIDES[currentSlideIndex]?.id === "what-i-help") {
+      // On HELLO, WORK and WHAT-I-HELP slides: no bottom stretch / tutunma effect
+      if (
+        SLIDES[currentSlideIndex]?.id === "hello" ||
+        SLIDES[currentSlideIndex]?.id === "work" ||
+        SLIDES[currentSlideIndex]?.id === "what-i-help"
+      ) {
         return;
       }
 
@@ -374,10 +453,11 @@ export default function Portfolio() {
       touchStartYRef.current = null;
       touchStartXRef.current = null;
 
+      const isHelloSlide = SLIDES[currentSlideIndex]?.id === "hello";
       const isWorkSlide = SLIDES[currentSlideIndex]?.id === "work";
       const isWhatIHelpSlide = SLIDES[currentSlideIndex]?.id === "what-i-help";
 
-      if (Math.abs(diffY) > diffX && Math.abs(diffY) > 35) {
+      if (Math.abs(diffY) > diffX && Math.abs(diffY) > 25) {
         const delta = diffY > 0 ? 1 : -1;
 
         const win = window as unknown as {
@@ -385,6 +465,13 @@ export default function Portfolio() {
         };
         if (win.__portfolioProjectScrollHandler && win.__portfolioProjectScrollHandler(delta)) {
           setBottomStretch(0);
+          return;
+        }
+
+        // On HELLO slide: immediate transition on mobile swipe without resistance
+        if (isHelloSlide && delta === 1) {
+          setBottomStretch(0);
+          triggerSlideChange(1);
           return;
         }
 
@@ -405,7 +492,17 @@ export default function Portfolio() {
             triggerSlideChange(1);
           }
         } else if (delta === -1 && isAtTop && currentSlideIndex > 0) {
-          triggerSlideChange(-1);
+          if (isWorkSlide) {
+            // "mobilde aşağı çektiğimzde ipi yukarı hareket yapmasını ölemek için yapışkan sayfa yap çok yukarı çekerse yukarı çıksın yoksa ipi çetiğinde yukarı sayfaya geçer"
+            // On WORK slide: sticky resistance for downward swipe (delta = -1).
+            // Normal downward drags or cord pulls will NEVER accidentally jump to Slide 05 Experience!
+            // Only a strong, deliberate swipe (> 190px) will navigate back.
+            if (Math.abs(diffY) > 190) {
+              triggerSlideChange(-1);
+            }
+          } else {
+            triggerSlideChange(-1);
+          }
         }
       }
 
@@ -535,10 +632,10 @@ export default function Portfolio() {
 
       {/* Full-Page Slideshow Container */}
       <div className="relative w-full h-full overflow-hidden">
-        <AnimatePresence mode="wait" custom={direction} initial={false}>
+        <AnimatePresence mode="wait" custom={{ direction, isHorizontal }} initial={false}>
           <motion.div
             key={currentSlideIndex}
-            custom={direction}
+            custom={{ direction, isHorizontal }}
             variants={slideVariants}
             initial="enter"
             animate="center"
@@ -553,11 +650,15 @@ export default function Portfolio() {
             <motion.div
               animate={{
                 y:
-                  SLIDES[currentSlideIndex]?.id === "work" || SLIDES[currentSlideIndex]?.id === "what-i-help"
+                  SLIDES[currentSlideIndex]?.id === "hello" ||
+                  SLIDES[currentSlideIndex]?.id === "work" ||
+                  SLIDES[currentSlideIndex]?.id === "what-i-help"
                     ? 0
                     : -bottomStretch * 46,
                 scaleY:
-                  SLIDES[currentSlideIndex]?.id === "work" || SLIDES[currentSlideIndex]?.id === "what-i-help"
+                  SLIDES[currentSlideIndex]?.id === "hello" ||
+                  SLIDES[currentSlideIndex]?.id === "work" ||
+                  SLIDES[currentSlideIndex]?.id === "what-i-help"
                     ? 1
                     : 1 + bottomStretch * 0.024,
               }}
@@ -592,8 +693,10 @@ export default function Portfolio() {
         </AnimatePresence>
       </div>
 
-      {/* Sündürme (Rubberband Stretch) Effect at the Bottom (Disabled on WORK and WHAT-I-HELP pages) */}
-      {SLIDES[currentSlideIndex]?.id !== "work" && SLIDES[currentSlideIndex]?.id !== "what-i-help" && (
+      {/* Sündürme (Rubberband Stretch) Effect at the Bottom (Disabled on HELLO, WORK and WHAT-I-HELP pages) */}
+      {SLIDES[currentSlideIndex]?.id !== "hello" &&
+        SLIDES[currentSlideIndex]?.id !== "work" &&
+        SLIDES[currentSlideIndex]?.id !== "what-i-help" && (
         <div
           className="pointer-events-none fixed bottom-0 inset-x-0 z-40 flex flex-col items-center justify-end overflow-visible select-none transition-opacity duration-200"
           style={{

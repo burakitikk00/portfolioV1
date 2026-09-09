@@ -1,78 +1,28 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { RotateCcw, ArrowDown, Volume2, VolumeX } from "lucide-react";
+import { playHelloChime, isSoundMuted, toggleSoundMuted, subscribeSoundMuted } from "../lib/sound";
 
 export default function HelloSection() {
   const [animKey, setAnimKey] = useState(0);
   const [showPrompt, setShowPrompt] = useState(false);
-  const [isSoundEnabled, setIsSoundEnabled] = useState(true);
-  const isSoundEnabledRef = useRef(true);
-  const audioContextRef = useRef<AudioContext | null>(null);
+  const [isSoundEnabled, setIsSoundEnabled] = useState(!isSoundMuted());
 
   useEffect(() => {
-    isSoundEnabledRef.current = isSoundEnabled;
-  }, [isSoundEnabled]);
-
-  /**
-   * Web Audio Synthesizer for warm nostalgic Macintosh chime
-   */
-  const playChime = useCallback(() => {
-    if (!isSoundEnabledRef.current) return;
-    try {
-      if (typeof window === "undefined") return;
-      const AudioContextClass =
-        window.AudioContext ||
-        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      if (!AudioContextClass) return;
-
-      if (!audioContextRef.current) {
-        audioContextRef.current = new AudioContextClass();
-      }
-      const ctx = audioContextRef.current;
-      if (ctx.state === "suspended") {
-        ctx.resume();
-      }
-
-      const now = ctx.currentTime;
-      // Classic C5 major chord arpeggio notes [C5, E5, G5, C6]
-      const notes = [523.25, 659.25, 783.99, 1046.50];
-
-      notes.forEach((freq, idx) => {
-        if (!ctx) return;
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(freq, now + idx * 0.08);
-
-        gain.gain.setValueAtTime(0.001, now + idx * 0.08);
-        gain.gain.exponentialRampToValueAtTime(0.06, now + idx * 0.08 + 0.04);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.08 + 1.2);
-
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-
-        osc.start(now + idx * 0.08);
-        osc.stop(now + idx * 0.08 + 1.3);
-      });
-    } catch (err) {
-      console.warn("Audio play restricted by browser policy:", err);
-    }
+    // Keep sound state synchronized across components
+    setIsSoundEnabled(!isSoundMuted());
+    const unsubscribe = subscribeSoundMuted((muted) => {
+      setIsSoundEnabled(!muted);
+    });
+    return unsubscribe;
   }, []);
 
   const toggleSound = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsSoundEnabled((prev) => {
-      const next = !prev;
-      if (next) {
-        setTimeout(() => {
-          playChime();
-        }, 50);
-      }
-      return next;
-    });
+    const newMuted = toggleSoundMuted();
+    setIsSoundEnabled(!newMuted);
   };
 
   useEffect(() => {
@@ -84,15 +34,15 @@ export default function HelloSection() {
 
   const handleReplay = useCallback((e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    playChime();
+    playHelloChime();
     setShowPrompt(false);
     setAnimKey((prev) => prev + 1);
-  }, [playChime]);
+  }, []);
 
   const handleNavigateToNext = useCallback(
     (e?: React.MouseEvent) => {
       if (e) e.stopPropagation();
-      playChime();
+      playHelloChime();
 
       const win = window as unknown as {
         __portfolioTriggerSlideChange?: ((dir: number) => void) | null;
@@ -110,51 +60,8 @@ export default function HelloSection() {
         }
       }
     },
-    [playChime]
+    []
   );
-
-  // Expose playChime globally so folder.tsx can trigger on slide navigation
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      (window as unknown as { __portfolioPlayHelloChime?: () => void }).__portfolioPlayHelloChime = playChime;
-    }
-    return () => {
-      if (typeof window !== "undefined") {
-        (window as unknown as { __portfolioPlayHelloChime?: () => void }).__portfolioPlayHelloChime = undefined;
-      }
-    };
-  }, [playChime]);
-
-  // Scroll down detection to trigger chime on this page
-  useEffect(() => {
-    let lastWheelTime = 0;
-    const handleWheel = (e: WheelEvent) => {
-      if (e.deltaY > 15 && Date.now() - lastWheelTime > 1200) {
-        lastWheelTime = Date.now();
-        playChime();
-      }
-    };
-
-    let touchStartY = 0;
-    const handleTouchStart = (e: TouchEvent) => {
-      touchStartY = e.touches[0].clientY;
-    };
-    const handleTouchEnd = (e: TouchEvent) => {
-      const diffY = touchStartY - e.changedTouches[0].clientY;
-      if (diffY > 35) {
-        playChime();
-      }
-    };
-
-    window.addEventListener("wheel", handleWheel, { passive: true });
-    window.addEventListener("touchstart", handleTouchStart, { passive: true });
-    window.addEventListener("touchend", handleTouchEnd, { passive: true });
-    return () => {
-      window.removeEventListener("wheel", handleWheel);
-      window.removeEventListener("touchstart", handleTouchStart);
-      window.removeEventListener("touchend", handleTouchEnd);
-    };
-  }, [playChime]);
 
   useEffect(() => {
     // Keyboard controls (R for replay)
@@ -177,7 +84,7 @@ export default function HelloSection() {
   return (
     <section
       id="hello"
-      className="snap-section relative w-full max-w-[100vw] h-screen flex flex-col items-center justify-center bg-[#050505] text-[#dfc3a2] bg-grain select-none overflow-hidden"
+      className="snap-section relative w-full max-w-[100vw] h-full min-h-screen flex flex-col items-center justify-center bg-[#050505] text-[#dfc3a2] bg-grain select-none overflow-hidden"
     >
       {/* Top System Minimal Bar */}
       <header className="absolute top-0 inset-x-0 h-14 sm:h-16 px-4 sm:px-6 md:px-12 flex items-center justify-between text-[11px] sm:text-xs tracking-widest uppercase text-[#dfc3a2]/40 z-20">

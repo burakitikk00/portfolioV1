@@ -32,6 +32,8 @@ export default function LiquidWorkSection() {
   const [pullProgress, setPullProgress] = useState(0); // 0 to 1
   const [isTugging, setIsTugging] = useState(false);
   const [isFlushing, setIsFlushing] = useState(false);
+  const [isInteracting, setIsInteracting] = useState(false);
+  const [hasInteractedOnce, setHasInteractedOnce] = useState(false);
 
   const pullProgressRef = useRef(0);
   const isFlushingRef = useRef(false);
@@ -56,14 +58,16 @@ export default function LiquidWorkSection() {
     setIsFlushing(true);
     setIsTugging(true);
     surgeActiveRef.current = true;
+    setIsInteracting(true);
+    setHasInteractedOnce(true);
 
     // Quick snap recoil on the cord
     setTimeout(() => {
       setIsTugging(false);
     }, 180);
 
-    // At the climax of the golden waterfall (when it fully covers the screen at ~480ms),
-    // trigger the slide transition to the next section (#showcase)
+    // At the climax of the golden waterfall (when it covers the screen at ~440ms),
+    // trigger the slide transition to the next section (#showcase - Slide 07)
     setTimeout(() => {
       const win = window as unknown as {
         __portfolioTriggerSlideChange?: ((dir: number) => void) | null;
@@ -72,11 +76,11 @@ export default function LiquidWorkSection() {
       if (typeof win.__portfolioTriggerSlideChange === "function") {
         win.__portfolioTriggerSlideChange(1);
       } else if (typeof win.__portfolioGoToSlide === "function") {
-        win.__portfolioGoToSlide(2);
+        win.__portfolioGoToSlide(6);
       } else {
         document.getElementById("showcase")?.scrollIntoView({ behavior: "smooth" });
       }
-    }, 480);
+    }, 440);
 
     // Stop canvas particle storm after the wave has passed
     setTimeout(() => {
@@ -89,6 +93,7 @@ export default function LiquidWorkSection() {
       setIsFlushing(false);
       pullProgressRef.current = 0;
       setPullProgress(0);
+      setIsInteracting(false);
     }, 1600);
   }, []);
 
@@ -101,17 +106,69 @@ export default function LiquidWorkSection() {
       if (isFlushingRef.current) return;
       const step = () => {
         if (pullProgressRef.current > 0.02) {
-          pullProgressRef.current *= 0.72;
+          pullProgressRef.current *= 0.7;
           setPullProgress(pullProgressRef.current);
           requestAnimationFrame(step);
         } else {
           pullProgressRef.current = 0;
           setPullProgress(0);
+          setIsInteracting(false);
         }
       };
       step();
-    }, 420);
+    }, 380);
   }, []);
+
+  /**
+   * Register Global Work Scroll Handler:
+   * When user scrolls down with mouse wheel anywhere on the Work slide,
+   * physically pull the cord down!
+   */
+  useEffect(() => {
+    const win = window as unknown as {
+      __portfolioWorkScrollHandler?: ((delta: number, rawDeltaY: number) => boolean) | null;
+    };
+
+    win.__portfolioWorkScrollHandler = (delta: number, rawDeltaY: number): boolean => {
+      if (isFlushingRef.current) return true;
+
+      if (delta > 0) {
+        // Scrolling DOWN -> physically pull the cord down
+        setIsInteracting(true);
+        setHasInteractedOnce(true);
+
+        const increment = Math.min(Math.max(Math.abs(rawDeltaY) * 0.0035, 0.26), 0.52);
+        const current = pullProgressRef.current;
+        const next = Math.min(1, current + increment);
+        pullProgressRef.current = next;
+        setPullProgress(next);
+
+        if (next >= 0.8) {
+          triggerDeluge();
+          return true;
+        }
+
+        scheduleDecay();
+        return true; // Cord handled this scroll step!
+      } else if (delta < 0) {
+        // Scrolling UP
+        if (pullProgressRef.current > 0.04) {
+          pullProgressRef.current = 0;
+          setPullProgress(0);
+          if (decayTimeoutRef.current) clearTimeout(decayTimeoutRef.current);
+          setIsInteracting(false);
+          return true;
+        }
+        return false;
+      }
+
+      return false;
+    };
+
+    return () => {
+      win.__portfolioWorkScrollHandler = null;
+    };
+  }, [triggerDeluge, scheduleDecay]);
 
   /**
    * Direct Mouse Drag on the cord
@@ -119,12 +176,14 @@ export default function LiquidWorkSection() {
   const handleCordMouseDown = (e: React.MouseEvent) => {
     if (isFlushingRef.current) return;
     isDraggingRef.current = true;
+    setIsInteracting(true);
+    setHasInteractedOnce(true);
     dragStartYRef.current = e.clientY;
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
       if (!isDraggingRef.current) return;
       const dy = Math.max(0, moveEvent.clientY - dragStartYRef.current);
-      const progress = Math.min(1, dy / 90);
+      const progress = Math.min(1, dy / 85);
       pullProgressRef.current = progress;
       setPullProgress(progress);
     };
@@ -134,7 +193,7 @@ export default function LiquidWorkSection() {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
 
-      if (pullProgressRef.current >= 0.7) {
+      if (pullProgressRef.current >= 0.65) {
         triggerDeluge();
       } else {
         scheduleDecay();
@@ -147,34 +206,40 @@ export default function LiquidWorkSection() {
 
   /**
    * Direct Touch Drag on the cord (mobile)
+   * e.stopPropagation() prevents folder.tsx touch handler from interpreting this as a slide swipe
    */
   const handleCordTouchStart = (e: React.TouchEvent) => {
     if (isFlushingRef.current) return;
+    e.stopPropagation();
     isDraggingRef.current = true;
+    setIsInteracting(true);
+    setHasInteractedOnce(true);
     dragStartYRef.current = e.touches[0].clientY;
 
     const handleTouchMove = (moveEvent: TouchEvent) => {
       if (!isDraggingRef.current) return;
+      moveEvent.stopPropagation();
       const dy = Math.max(0, moveEvent.touches[0].clientY - dragStartYRef.current);
-      const progress = Math.min(1, dy / 90);
+      const progress = Math.min(1, dy / 85);
       pullProgressRef.current = progress;
       setPullProgress(progress);
     };
 
-    const handleTouchEnd = () => {
+    const handleTouchEnd = (endEvent: TouchEvent) => {
+      endEvent.stopPropagation();
       isDraggingRef.current = false;
       window.removeEventListener("touchmove", handleTouchMove);
       window.removeEventListener("touchend", handleTouchEnd);
 
-      if (pullProgressRef.current >= 0.7) {
+      if (pullProgressRef.current >= 0.65) {
         triggerDeluge();
       } else {
         scheduleDecay();
       }
     };
 
-    window.addEventListener("touchmove", handleTouchMove);
-    window.addEventListener("touchend", handleTouchEnd);
+    window.addEventListener("touchmove", handleTouchMove, { passive: false });
+    window.addEventListener("touchend", handleTouchEnd, { passive: false });
   };
 
   /**
@@ -182,6 +247,8 @@ export default function LiquidWorkSection() {
    */
   const handleCordClick = () => {
     if (isFlushingRef.current) return;
+    setIsInteracting(true);
+    setHasInteractedOnce(true);
     pullProgressRef.current = 1;
     setPullProgress(1);
     triggerDeluge();
@@ -513,65 +580,116 @@ export default function LiquidWorkSection() {
           onMouseDown={handleCordMouseDown}
           onTouchStart={handleCordTouchStart}
           onClick={handleCordClick}
+          onMouseEnter={() => setIsInteracting(true)}
+          onMouseLeave={() => {
+            if (pullProgress === 0) setIsInteracting(false);
+          }}
           className="mt-2.5 sm:mt-5 flex flex-col items-center pointer-events-auto cursor-grab active:cursor-grabbing select-none group relative py-1.5 sm:py-2 px-3 sm:px-6"
-          title="Aşağı kaydırın veya ipi çekerek sayfayı geçin"
+          title="Aşağı kaydırın veya ipi çekerek projeleri açın"
         >
           <p className="text-[8.5px] sm:text-[10px] md:text-[11px] tracking-[0.14em] sm:tracking-[0.3em] text-zinc-400 uppercase font-light group-hover:text-gold-champagne transition-colors text-center whitespace-nowrap px-2">
             {pullProgress > 0.08
-              ? `İPİ ÇEKİN [ ${Math.round(pullProgress * 100)}% ]`
+              ? pullProgress >= 0.78
+                ? "AKIŞ BAŞLATILIYOR // PROJELER"
+                : `İP ÇEKİLİYOR [ ${Math.round(pullProgress * 100)}% ]`
               : "PROJELERİ VE ÇALIŞMALARI KEŞFEDİN"}
           </p>
 
-          {/* Delicately styled descending needle icon / Pull-Cord */}
+          {/* Delicately styled descending swinging needle icon / Pull-Cord */}
           <div
             className={`mt-2 flex flex-col items-center relative ${
-              pullProgress === 0 ? "needle-animation" : ""
+              pullProgress === 0 && !isTugging && !isInteracting ? "cord-swing-animation" : ""
             }`}
             style={{
-              transform: isTugging ? "translateY(22px) scale(0.94)" : "none",
-              transition: isTugging ? "transform 0.15s cubic-bezier(0.2, 0, 0, 1)" : "none",
+              transformOrigin: "top center",
+              transform: isTugging
+                ? "translateY(28px) scale(0.92)"
+                : pullProgress > 0
+                ? `translateY(${pullProgress * 14}px)`
+                : "none",
+              transition: isTugging
+                ? "transform 0.15s cubic-bezier(0.2, 0, 0, 1)"
+                : "transform 0.1s ease-out",
             }}
           >
             {/* Cord line that physically stretches with scroll or drag */}
             <div
-              className="w-[1.5px] bg-gradient-to-b from-zinc-500 via-[#ddbf92] to-gold-champagne rounded-full transition-all duration-75"
+              className="w-[2px] bg-gradient-to-b from-zinc-500 via-[#ddbf92] to-gold-champagne rounded-full transition-all duration-75"
               style={{
-                height: `${24 + pullProgress * 75}px`,
+                height: `${28 + pullProgress * 85}px`,
                 boxShadow:
-                  pullProgress > 0.1
-                    ? `0 0 ${pullProgress * 10}px rgba(221, 191, 146, 0.75)`
+                  pullProgress > 0.05
+                    ? `0 0 ${pullProgress * 14}px rgba(221, 191, 146, 0.85)`
                     : "none",
               }}
             />
 
             {/* Bead handle at bottom of cord */}
             <div
-              className="relative -mt-0.5 flex items-center justify-center transition-all duration-75"
+              className={`relative -mt-0.5 flex items-center justify-center transition-all duration-75 ${
+                pullProgress === 0 && !isTugging && !isInteracting ? "bead-swing-animation" : ""
+              }`}
               style={{
-                transform: `scale(${1 + pullProgress * 0.35})`,
+                transform: `scale(${1 + pullProgress * 0.4})`,
               }}
             >
               <div
-                className="w-2.5 h-2.5 rounded-full border border-gold-champagne transition-colors duration-150"
+                className="w-3.5 h-3.5 rounded-full border-2 border-gold-champagne transition-colors duration-150 flex items-center justify-center"
                 style={{
-                  boxShadow: `0 0 ${6 + pullProgress * 14}px rgba(221, 191, 146, ${
-                    0.5 + pullProgress * 0.5
+                  boxShadow: `0 0 ${8 + pullProgress * 18}px rgba(221, 191, 146, ${
+                    0.6 + pullProgress * 0.4
                   })`,
-                  backgroundColor: pullProgress > 0.5 ? "#ddbf92" : "transparent",
+                  backgroundColor: pullProgress > 0.4 ? "#ddbf92" : "#121214",
                 }}
-              />
+              >
+                <div className="w-1 h-1 rounded-full bg-gold-champagne" />
+              </div>
+
               {/* Dynamic Ping Ring when tension builds */}
-              {pullProgress > 0.3 && (
-                <div className="absolute inset-0 rounded-full border border-gold-champagne animate-ping opacity-60" />
+              {pullProgress > 0.25 && (
+                <div className="absolute -inset-1 rounded-full border border-gold-champagne animate-ping opacity-75" />
               )}
             </div>
 
-            {/* Micro Helper Tag */}
+            {/* Micro Helper Tag during pull */}
             {pullProgress > 0.05 && (
-              <span className="mt-1 text-[8px] font-mono tracking-widest text-gold-champagne uppercase font-bold animate-pulse">
-                {pullProgress >= 0.94 ? "AKIŞ BAŞLATILIYOR!" : "AŞAĞI ÇEKİN ↓"}
+              <span className="mt-1.5 text-[8px] font-mono tracking-widest text-gold-champagne uppercase font-bold animate-pulse whitespace-nowrap">
+                {pullProgress >= 0.78 ? "AKIŞ BAŞLATILIYOR!" : "AŞAĞI ÇEKİN ↓"}
               </span>
             )}
+
+            {/* Interactive Mouse & Touch Motion Cue Indicator */}
+            <div
+              className={`absolute top-full mt-3 flex flex-col items-center pointer-events-none transition-all duration-300 ${
+                pullProgress > 0 || isInteracting || isFlushing
+                  ? "opacity-0 translate-y-2 pointer-events-none"
+                  : "opacity-100"
+              }`}
+            >
+              <div className="animate-mouse-pull flex flex-col items-center">
+                {/* Stylized Computer Mouse with animated scroll wheel */}
+                <div className="relative p-1 rounded-full bg-black/70 border border-gold-champagne/50 backdrop-blur-md shadow-[0_0_15px_rgba(221,191,146,0.4)]">
+                  <svg
+                    className="w-4 h-4 text-gold-champagne drop-shadow-[0_2px_6px_rgba(221,191,146,0.8)]"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect x="6" y="3" width="12" height="18" rx="6" />
+                    <line x1="12" y1="7" x2="12" y2="11" className="animate-pulse" />
+                  </svg>
+                  <div className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-gold-champagne animate-ping" />
+                </div>
+
+                {/* Downward indicator chevron */}
+                <div className="text-gold-champagne -mt-0.5">
+                  <span className="text-[10px] font-bold block animate-bounce">↓</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </header>
