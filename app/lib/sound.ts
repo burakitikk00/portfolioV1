@@ -24,28 +24,63 @@ if (typeof window !== "undefined") {
 }
 
 /**
+ * Check if the browser allows audio playback (user has performed a gesture)
+ */
+export function hasUserActivated(): boolean {
+  if (typeof window === "undefined") return false;
+  if (isAudioUnlocked) return true;
+  const nav = navigator as unknown as { userActivation?: { hasBeenActive: boolean } };
+  if (nav.userActivation && typeof nav.userActivation.hasBeenActive === "boolean") {
+    return nav.userActivation.hasBeenActive;
+  }
+  return isAudioUnlocked;
+}
+
+/**
  * Safely retrieve or instantiate the Web Audio Context
  */
 function getAudioContext(): AudioContext | null {
   if (typeof window === "undefined") return null;
   if (!sharedAudioCtx) {
-    const AudioContextClass =
-      window.AudioContext ||
-      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    if (AudioContextClass) {
-      sharedAudioCtx = new AudioContextClass();
+    // Only instantiate if the browser has confirmed user activation
+    if (!hasUserActivated()) {
+      return null;
+    }
+    try {
+      const AudioContextClass =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (AudioContextClass) {
+        sharedAudioCtx = new AudioContextClass();
+      }
+    } catch {
+      return null;
     }
   }
   return sharedAudioCtx;
 }
 
 /**
- * Pre-warm and unlock the AudioContext on first user interaction (touch, click, wheel, keydown).
- * Crucial for iOS Safari and Android Chrome to allow audio on slide transition.
+ * Pre-warm and unlock the AudioContext on first genuine user interaction (click, touch, keydown).
+ * Note: 'wheel' and 'scroll' are deliberately excluded because browsers do not recognize them as user activation.
  */
 export function unlockAudio() {
   if (typeof window === "undefined" || isAudioUnlocked) return;
-  const ctx = getAudioContext();
+
+  if (!sharedAudioCtx) {
+    try {
+      const AudioContextClass =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (AudioContextClass) {
+        sharedAudioCtx = new AudioContextClass();
+      }
+    } catch {
+      return;
+    }
+  }
+
+  const ctx = sharedAudioCtx;
   if (!ctx) return;
 
   if (ctx.state === "suspended") {
@@ -59,9 +94,9 @@ export function unlockAudio() {
   }
 }
 
-// Auto-register unlock listeners on browser window
+// Auto-register unlock listeners on browser window for genuine user activation events only
 if (typeof window !== "undefined") {
-  const unlockEvents = ["touchstart", "touchend", "pointerdown", "mousedown", "keydown", "wheel"];
+  const unlockEvents = ["click", "pointerdown", "touchstart", "touchend", "keydown"];
   const handleUnlock = () => {
     unlockAudio();
     unlockEvents.forEach((evt) => window.removeEventListener(evt, handleUnlock));
@@ -76,6 +111,7 @@ if (typeof window !== "undefined") {
  */
 export function playHelloChime() {
   if (typeof window === "undefined" || isMutedState) return;
+  if (!hasUserActivated()) return;
 
   try {
     const ctx = getAudioContext();
@@ -138,6 +174,7 @@ export function setSoundMuted(muted: boolean) {
 }
 
 export function toggleSoundMuted(): boolean {
+  unlockAudio();
   setSoundMuted(!isMutedState);
   if (!isMutedState) {
     // Quick test chime when unmuting
