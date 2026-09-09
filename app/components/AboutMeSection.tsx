@@ -18,7 +18,7 @@ export default function AboutMeSection() {
         <header className="w-full flex flex-col items-center justify-center mb-4 sm:mb-6 lg:mb-8">
           <div className="flex items-center justify-center gap-2 sm:gap-3 text-[10px] sm:text-xs tracking-[0.14em] sm:tracking-[0.28em] text-[#E3C896] font-mono uppercase mb-1 sm:mb-1.5 whitespace-nowrap">
             <span className="text-[#E3C896] font-bold">03</span>
-            <span className="text-[#E3C896]/50">//</span>
+            <span className="text-[#E3C896]/50">{"//"}</span>
             <span className="text-white/80">KODLARIN ARDINDAKİ İSİM</span>
           </div>
 
@@ -110,7 +110,7 @@ export default function AboutMeSection() {
                 </div>
 
                 <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-[8px] font-mono text-[#E3C896]/50 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                  <span>HEDEF KİLİTLENDİ // YENİ PROJELER</span>
+                  <span>HEDEF KİLİTLENDİ {"//"} YENİ PROJELER</span>
                   <span>GÖREVE HAZIR</span>
                 </div>
               </div>

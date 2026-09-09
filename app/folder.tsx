@@ -714,7 +714,7 @@ export default function Portfolio() {
               >
                 {/* Floating Tooltip - visible on desktop only */}
                 <span className="hidden md:block pointer-events-none absolute right-full mr-3.5 px-2.5 py-1 rounded-md bg-[#121214]/95 border border-white/10 text-[10px] font-mono tracking-widest uppercase text-[#dfc3a2] opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 whitespace-nowrap shadow-xl">
-                  {slide.num} // {slide.name}
+                  {slide.num} {"//"} {slide.name}
                 </span>
 
                 {/* Dot Element */}

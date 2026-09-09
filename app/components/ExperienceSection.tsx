@@ -52,7 +52,7 @@ export default function ExperienceSection() {
         <header className="w-full flex flex-col items-center justify-center mb-6 sm:mb-10 lg:mb-12 text-center">
           <div className="flex items-center justify-center gap-2 sm:gap-3 text-[10px] sm:text-xs tracking-[0.14em] sm:tracking-[0.28em] text-[#dfc3a2] font-mono uppercase mb-1.5 sm:mb-2 whitespace-nowrap">
             <span className="font-bold text-[#dfc3a2]">05</span>
-            <span className="text-[#dfc3a2]/50">//</span>
+            <span className="text-[#dfc3a2]/50">{"//"}</span>
             <span className="text-zinc-400">KARİYER, EĞİTİM & VİZYON</span>
           </div>
 
@@ -254,7 +254,7 @@ export default function ExperienceSection() {
                 </div>
               </div>
               <p className="text-xs text-zinc-300 leading-relaxed font-sans italic border-l-2 border-[#dfc3a2]/60 pl-3 py-1">
-                "Modern yazılım mimarilerinde uzmanlaşmayı hedefliyorum. Ailemden aldığım güçlü çalışma ahlakı ve azmimle güvenebileceğiniz bir takım arkadaşı olmak en büyük gayem. Her işe büyük bir sahiplenme duygusuyla yaklaşır, hakkını vererek yapmaya çalışırım."
+                &ldquo;Modern yazılım mimarilerinde uzmanlaşmayı hedefliyorum. Ailemden aldığım güçlü çalışma ahlakı ve azmimle güvenebileceğiniz bir takım arkadaşı olmak en büyük gayem. Her işe büyük bir sahiplenme duygusuyla yaklaşır, hakkını vererek yapmaya çalışırım.&rdquo;
               </p>
             </motion.div>
           </div>
