@@ -4,6 +4,20 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
+const TECH_MARQUEE_ITEMS = [
+  "Next.js 16",
+  "React 19",
+  "TypeScript",
+  "PostgreSQL",
+  "Prisma",
+  "MSSQL",
+  "Tailwind CSS",
+  "Netsim N4 ERP",
+  "Electron.js",
+  "Node.js",
+  "REST API & 2FA",
+];
+
 export default function LiquidWorkSection() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -48,7 +62,17 @@ export default function LiquidWorkSection() {
     // At the climax of the golden waterfall (when it fully covers the screen at ~480ms),
     // trigger the slide transition to the next section (#showcase)
     setTimeout(() => {
-      document.getElementById("showcase")?.scrollIntoView();
+      const win = window as unknown as {
+        __portfolioTriggerSlideChange?: ((dir: number) => void) | null;
+        __portfolioGoToSlide?: ((idx: number) => void) | null;
+      };
+      if (typeof win.__portfolioTriggerSlideChange === "function") {
+        win.__portfolioTriggerSlideChange(1);
+      } else if (typeof win.__portfolioGoToSlide === "function") {
+        win.__portfolioGoToSlide(2);
+      } else {
+        document.getElementById("showcase")?.scrollIntoView({ behavior: "smooth" });
+      }
     }, 480);
 
     // Stop canvas particle storm after the wave has passed
@@ -85,64 +109,6 @@ export default function LiquidWorkSection() {
       step();
     }, 420);
   }, []);
-
-  /**
-   * Scroll handler intercepted by folder.tsx
-   */
-  const handleWorkScrollDelta = useCallback(
-    (delta: number): boolean => {
-      // If currently surging, absorb all scroll events
-      if (isFlushingRef.current) return true;
-
-      // Scrolling DOWN -> pull the cord
-      if (delta > 0) {
-        if (decayTimeoutRef.current) clearTimeout(decayTimeoutRef.current);
-
-        pullProgressRef.current = Math.min(1, pullProgressRef.current + 0.38);
-        setPullProgress(pullProgressRef.current);
-
-        if (pullProgressRef.current >= 0.96) {
-          triggerDeluge();
-        } else {
-          scheduleDecay();
-        }
-        return true;
-      }
-
-      // Scrolling UP
-      if (delta < 0) {
-        if (pullProgressRef.current > 0.08) {
-          pullProgressRef.current = Math.max(0, pullProgressRef.current - 0.45);
-          setPullProgress(pullProgressRef.current);
-          return true; // Still handling within WORK section
-        }
-        // If cord is already relaxed, let folder.tsx navigate to previous slide
-        return false;
-      }
-
-      return false;
-    },
-    [triggerDeluge, scheduleDecay]
-  );
-
-  /**
-   * Register scroll interceptor to window for folder.tsx
-   */
-  useEffect(() => {
-    const win = window as unknown as {
-      __portfolioWorkScrollHandler?: ((delta: number) => boolean) | null;
-    };
-
-    if (isVisibleRef.current) {
-      win.__portfolioWorkScrollHandler = handleWorkScrollDelta;
-    }
-
-    return () => {
-      if (win.__portfolioWorkScrollHandler === handleWorkScrollDelta) {
-        win.__portfolioWorkScrollHandler = null;
-      }
-    };
-  }, [handleWorkScrollDelta]);
 
   /**
    * Direct Mouse Drag on the cord
@@ -368,9 +334,11 @@ export default function LiquidWorkSection() {
 
     const spawnDrops = () => {
       const now = performance.now();
+      const isMobile = width < 768;
+      const spawnInterval = isMobile ? 500 : 360;
 
       // Normal ambient dripping from the WORK typography
-      if (now - lastSpawn > 360) {
+      if (now - lastSpawn > spawnInterval) {
         lastSpawn = now;
         const origin = dropSpawnPoints[Math.floor(Math.random() * dropSpawnPoints.length)];
         const centerX = width / 2;
@@ -382,7 +350,8 @@ export default function LiquidWorkSection() {
 
       // SURGE FLUSH: When the cord is pulled, spawn a torrential golden cloud of drops
       if (surgeActiveRef.current) {
-        for (let s = 0; s < 7; s++) {
+        const stormBatch = isMobile ? 3 : 7;
+        for (let s = 0; s < stormBatch; s++) {
           const spawnX = Math.random() * width;
           const spawnY = -20 + Math.random() * (height * 0.35);
           droplets.push(new Droplet(spawnX, spawnY, true));
@@ -395,20 +364,20 @@ export default function LiquidWorkSection() {
       const clientX = e.clientX;
       const clientY = e.clientY;
 
-      if (Math.random() > 0.65) {
+      if (Math.random() > 0.7) {
         const drop = new Droplet(clientX, clientY);
         drop.vy = Math.random() * 1.5;
         droplets.push(drop);
       }
 
-      if (containerRef.current) {
+      if (containerRef.current && window.innerWidth >= 768) {
         const xPercent = clientX / window.innerWidth - 0.5;
         const yPercent = clientY / window.innerHeight - 0.5;
         containerRef.current.style.transform = `translate3d(${xPercent * 10}px, ${yPercent * 8}px, 0) rotateX(${-yPercent * 4}deg) rotateY(${xPercent * 5}deg)`;
       }
     };
 
-    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mousemove", handleMouseMove, { passive: true });
 
     const render = () => {
       if (!isVisibleRef.current) return;
@@ -437,19 +406,11 @@ export default function LiquidWorkSection() {
     const observer = new IntersectionObserver(
       ([entry]) => {
         isVisibleRef.current = entry.isIntersecting;
-        const win = window as unknown as {
-          __portfolioWorkScrollHandler?: ((delta: number) => boolean) | null;
-        };
-
         if (entry.isIntersecting) {
-          win.__portfolioWorkScrollHandler = handleWorkScrollDelta;
           if (!animationFrameId) {
             animationFrameId = requestAnimationFrame(render);
           }
         } else {
-          if (win.__portfolioWorkScrollHandler === handleWorkScrollDelta) {
-            win.__portfolioWorkScrollHandler = null;
-          }
           if (animationFrameId) {
             cancelAnimationFrame(animationFrameId);
             animationFrameId = null;
@@ -467,13 +428,13 @@ export default function LiquidWorkSection() {
       observer.disconnect();
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
     };
-  }, [handleWorkScrollDelta]);
+  }, []);
 
   return (
     <section
       ref={sectionRef}
       id="work"
-      className="snap-section h-screen min-h-[560px] w-full select-none bg-[#0a0a0c] text-white flex flex-col justify-between relative font-mono overflow-hidden py-6 sm:py-8 px-4 md:px-12"
+      className="snap-section h-screen min-h-[520px] w-full max-w-[100vw] select-none bg-[#0a0a0c] text-white flex flex-col justify-between relative font-mono overflow-hidden py-4 sm:py-6 md:py-8 px-3 sm:px-6 md:px-12"
     >
       {/* SVG Filters for Liquid Gooey Physics */}
       <svg aria-hidden="true" className="absolute w-0 h-0 pointer-events-none">
@@ -506,28 +467,42 @@ export default function LiquidWorkSection() {
       />
 
       {/* BEGIN: MainHeader */}
-      <header className="relative z-20 w-full pt-4 sm:pt-6 px-4 sm:px-8 flex flex-col items-center justify-between">
-        {/* Top Tech Stack Navigation with User's Real Technologies */}
-        <nav className="w-full flex items-center justify-center flex-wrap gap-x-4 sm:gap-x-6 gap-y-2 text-[10px] md:text-xs tracking-[0.25em] uppercase text-zinc-400 font-medium">
-          <span className="hover:text-zinc-200 transition-colors cursor-pointer">Next.js 16</span>
-          <span className="text-zinc-700">•</span>
-          <span className="hover:text-zinc-200 transition-colors cursor-pointer">React 19</span>
-          <span className="text-zinc-700">•</span>
-          <span className="hover:text-zinc-200 transition-colors cursor-pointer">TypeScript</span>
-          <span className="text-zinc-700">•</span>
-          {/* Active Highlighted Element */}
-          <span className="text-gold-champagne font-semibold tracking-[0.3em] px-2.5 py-0.5 rounded border border-gold-champagne/20 bg-gold-champagne/5 transition-all shadow-[0_0_12px_rgba(221,191,146,0.15)] cursor-pointer">
-            PostgreSQL
-          </span>
-          <span className="text-zinc-700">•</span>
-          <span className="hover:text-zinc-200 transition-colors cursor-pointer">Prisma</span>
-          <span className="text-zinc-700">•</span>
-          <span className="hover:text-zinc-200 transition-colors cursor-pointer">MSSQL</span>
-          <span className="text-zinc-700">•</span>
-          <span className="hover:text-zinc-200 transition-colors cursor-pointer">Tailwind CSS</span>
-          <span className="text-zinc-700">•</span>
-          <span className="hover:text-zinc-200 transition-colors cursor-pointer">Netsim N4</span>
-        </nav>
+      <header className="relative z-20 w-full pt-2 sm:pt-5 px-2 sm:px-8 flex flex-col items-center justify-between">
+        {/* Continuous Flowing Marquee (Right to Left / Kayar Yazı) */}
+        <div className="w-full max-w-full overflow-hidden whitespace-nowrap py-1 relative select-none">
+          {/* Subtle edge fade masks */}
+          <div className="absolute left-0 inset-y-0 w-8 sm:w-16 bg-gradient-to-r from-[#050505] to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 inset-y-0 w-8 sm:w-16 bg-gradient-to-l from-[#050505] to-transparent z-10 pointer-events-none" />
+
+          <motion.div
+            className="flex items-center gap-6 sm:gap-10 whitespace-nowrap w-max"
+            animate={{ x: ["0%", "-50%"] }}
+            transition={{
+              repeat: Infinity,
+              ease: "linear",
+              duration: 26,
+            }}
+          >
+            {/* Duplicated list for seamless, gap-free infinite scrolling */}
+            {[...TECH_MARQUEE_ITEMS, ...TECH_MARQUEE_ITEMS].map((tech, idx) => (
+              <span
+                key={idx}
+                className="inline-flex items-center gap-3 sm:gap-5 text-[9px] sm:text-[10px] md:text-xs tracking-[0.14em] sm:tracking-[0.22em] uppercase font-mono text-zinc-400"
+              >
+                <span
+                  className={
+                    tech === "PostgreSQL" || tech === "Next.js 16"
+                      ? "text-gold-champagne font-semibold px-2 py-0.5 rounded border border-gold-champagne/20 bg-gold-champagne/5 shadow-[0_0_10px_rgba(221,191,146,0.12)]"
+                      : "hover:text-zinc-200 transition-colors"
+                  }
+                >
+                  {tech}
+                </span>
+                <span className="text-zinc-700">•</span>
+              </span>
+            ))}
+          </motion.div>
+        </div>
 
         {/* Scroll Indicator & Interactive Pull-Cord to Showcase */}
         <div
@@ -535,10 +510,10 @@ export default function LiquidWorkSection() {
           onMouseDown={handleCordMouseDown}
           onTouchStart={handleCordTouchStart}
           onClick={handleCordClick}
-          className="mt-4 sm:mt-5 flex flex-col items-center pointer-events-auto cursor-grab active:cursor-grabbing select-none group relative py-2 px-6"
+          className="mt-2.5 sm:mt-5 flex flex-col items-center pointer-events-auto cursor-grab active:cursor-grabbing select-none group relative py-1.5 sm:py-2 px-3 sm:px-6"
           title="Aşağı kaydırın veya ipi çekerek sayfayı geçin"
         >
-          <p className="text-[10px] md:text-[11px] tracking-[0.35em] text-zinc-400 uppercase font-light group-hover:text-gold-champagne transition-colors">
+          <p className="text-[8.5px] sm:text-[10px] md:text-[11px] tracking-[0.14em] sm:tracking-[0.3em] text-zinc-400 uppercase font-light group-hover:text-gold-champagne transition-colors text-center whitespace-nowrap px-2">
             {pullProgress > 0.08
               ? `İPİ ÇEKİN [ ${Math.round(pullProgress * 100)}% ]`
               : "PROJELERİ VE ÇALIŞMALARI KEŞFEDİN"}
@@ -608,8 +583,8 @@ export default function LiquidWorkSection() {
           className="relative w-full max-w-6xl mx-auto flex items-center justify-center gooey-filter-target select-none transition-transform duration-150 ease-out will-change-transform"
         >
           <svg
-            className="w-full h-auto max-h-[46vh] sm:max-h-[50vh] overflow-visible select-none drop-shadow-2xl"
-            viewBox="0 0 1100 340"
+            className="w-full h-auto max-h-[46vh] sm:max-h-[50vh] overflow-visible select-none drop-shadow-2xl mx-auto"
+            viewBox="0 0 1170 350"
             xmlns="http://www.w3.org/2000/svg"
           >
             {/* Ambient Backing Glow Filter */}
@@ -632,41 +607,43 @@ export default function LiquidWorkSection() {
                 <path
                   className="letter-path"
                   d="
-                    M 40 45 
-                    L 125 45 
-                    L 170 200 
-                    L 215 45 
+                    M 35 45 
+                    L 115 45 
+                    L 160 200 
+                    L 205 45 
                     L 285 45 
                     L 330 200 
                     L 375 45 
                     L 455 45 
                     L 380 270 
                     C 375 285 365 292 350 292
-                    C 340 292 330 285 325 270
-                    L 280 135 
-                    L 240 270 
-                    C 235 285 225 292 210 292 
-                    C 195 292 185 285 180 270
-                    L 120 45 
+                    C 335 292 325 285 320 270
+                    L 245 135 
+                    L 170 270 
+                    C 165 285 155 292 140 292 
+                    C 125 292 115 285 110 270
+                    L 35 45 
                     Z
                   "
                 />
                 {/* Custom Fluid Drops & Dripping Stems on 'W' */}
                 <path
                   d="
-                    M 175 260 
-                    C 170 290, 160 320, 155 330 
-                    C 152 338, 142 338, 140 330 
-                    C 135 315, 142 270, 150 250 
+                    M 165 260 
+                    C 160 290, 150 320, 145 330 
+                    C 142 338, 132 338, 130 330 
+                    C 125 315, 132 270, 140 250 
                     Z
                   "
                 />
-                {/* Hanging droplet nodes on W */}
-                <circle cx="152" cy="336" r="6.5" />
-                <circle cx="236" cy="318" r="8" />
-                <circle cx="234" cy="336" r="3.5" />
-                <circle cx="205" cy="305" r="4.5" />
-                <circle cx="120" cy="275" r="5" />
+                {/* Hanging droplet nodes on W (both feet) */}
+                <circle cx="142" cy="336" r="6.5" />
+                <circle cx="140" cy="354" r="3.5" />
+                <circle cx="105" cy="280" r="5" />
+                <circle cx="350" cy="318" r="7.5" />
+                <circle cx="352" cy="336" r="4" />
+                <circle cx="375" cy="295" r="5" />
+                <circle cx="320" cy="290" r="4.5" />
               </g>
 
               {/* LETTER: O with bottom drip clusters & internal droplet */}
@@ -780,38 +757,14 @@ export default function LiquidWorkSection() {
       {/* END: MainContent */}
 
       {/* BEGIN: BottomNavigation */}
-      <footer className="relative z-20 w-full pb-6 pt-3 px-4 sm:px-6 md:px-12 flex flex-col items-center justify-between">
-        {/* Discipline Highlights Bar */}
-        <div className="w-full flex items-center justify-between max-w-5xl text-[10px] sm:text-xs md:text-[12px] tracking-[0.22em] uppercase font-medium text-zinc-400 border-t border-zinc-800/60 pt-5 px-2">
-          <span className="hover:text-gold-champagne transition-colors cursor-pointer text-zinc-500">
-            FULL-STACK WEB
-          </span>
-          <span className="text-zinc-700 text-xs">✦</span>
-          <span className="text-white font-bold tracking-[0.25em] hover:text-gold-champagne transition-colors cursor-pointer">
-            SOFTWARE DEVELOPMENT
-          </span>
-          <span className="text-zinc-700 text-xs">✦</span>
-          <span className="text-white font-bold tracking-[0.25em] hover:text-gold-champagne transition-colors cursor-pointer">
-            BACKEND &amp; VERİTABANI
-          </span>
-          <span className="text-zinc-700 text-xs">✦</span>
-          <span className="hover:text-gold-champagne transition-colors cursor-pointer text-zinc-500">
-            ERP ENTEGRASYONU
-          </span>
-          <span className="text-zinc-700 text-xs">✦</span>
-          <span className="hover:text-gold-champagne transition-colors cursor-pointer text-zinc-500">
-            İNTERAKTİF ARAYÜZ
-          </span>
-        </div>
-
-        {/* Fine Bottom Subtext / Year & Author Metadata */}
-        <div className="w-full flex flex-col sm:flex-row items-center justify-between max-w-6xl mt-4 gap-2 text-[9px] md:text-[10px] tracking-[0.28em] text-zinc-500 uppercase">
-          <span>SEÇİLMİŞ PROJELER [2023 — 2026]</span>
-          <span className="flex items-center gap-1.5 text-zinc-400">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/80 animate-pulse"></span>
-            YENİ PROJELER VE İŞ BİRLİKLERİ İÇİN MÜSAİT
-          </span>
-          <span>BURAK İTİK — İSTANBUL / REMOTE</span>
+      <footer className="relative z-20 w-full pb-3 sm:pb-6 pt-2 px-4 flex items-center justify-center">
+        {/* Single Minimalist Clean Line */}
+        <div className="flex items-center justify-center gap-2 sm:gap-4 text-[9px] sm:text-[11px] font-mono tracking-[0.16em] sm:tracking-[0.25em] uppercase text-zinc-400 whitespace-nowrap border-t border-zinc-800/60 pt-3 sm:pt-4 px-4 text-center">
+          <span className="text-zinc-500">SEÇİLMİŞ PROJELER</span>
+          <span className="text-zinc-700">•</span>
+          <span className="text-zinc-200 font-semibold">SOFTWARE DEVELOPMENT</span>
+          <span className="text-zinc-700">•</span>
+          <span className="text-[#ddbf92]">BURAK İTİK</span>
         </div>
       </footer>
       {/* END: BottomNavigation */}

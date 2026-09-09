@@ -164,10 +164,6 @@ function ServiceCard({
   });
 
   // 3D Depth Animation:
-  // Card 0 scales down when Card 1 overlaps it, and slightly more as Cards 2 & 3 stack
-  // Card 1 scales down when Card 2 overlaps it, and slightly more as Card 3 stacks
-  // Card 2 scales down when Card 3 overlaps it
-  // Card 3 stays at scale 1 and opacity 1
   const scale = useTransform(
     containerProgress,
     index === 0
@@ -249,6 +245,7 @@ function ServiceCard({
         opacity,
         filter: filterBrightness,
         transformOrigin: "top center",
+        willChange: "transform, opacity",
       }}
       whileHover={{
         scale: 0.99,
@@ -264,33 +261,33 @@ function ServiceCard({
       } min-h-[480px] h-[60vh] sm:h-[64vh] max-h-[660px]`}
     >
       {/* Top Header Row of the Card */}
-      <div className="flex items-center justify-between border-b border-zinc-800/80 pb-4 sm:pb-5">
-        <div className="flex items-center gap-3.5">
+      <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3 sm:pb-5">
+        <div className="flex items-center gap-2.5 sm:gap-3.5">
           <div
-            className={`w-11 h-11 rounded-2xl flex items-center justify-center border shadow-inner transition-transform duration-300 group-hover:scale-105 ${accentBadge}`}
+            className={`w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl flex items-center justify-center border shadow-inner transition-transform duration-300 group-hover:scale-105 ${accentBadge}`}
           >
-            <Icon className="w-5 h-5" />
+            <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
 
           <div className="flex flex-col">
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-mono uppercase tracking-widest text-zinc-400 font-semibold">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-widest text-zinc-400 font-semibold">
                 {card.stage}
               </span>
               {card.isHighlighted && (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-medium bg-red-600/20 text-red-400 border border-red-500/30">
+                <span className="px-1.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-mono font-medium bg-red-600/20 text-red-400 border border-red-500/30">
                   ÖNE ÇIKAN
                 </span>
               )}
             </div>
-            <span className="text-xs text-zinc-400 font-mono hidden sm:inline-block">
+            <span className="text-[11px] sm:text-xs text-zinc-400 font-mono hidden sm:inline-block">
               {card.subtitle.split("·")[0]}
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-950/80 border border-zinc-800 text-[11px] font-mono text-zinc-400">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-zinc-950/80 border border-zinc-800 text-[10px] sm:text-[11px] font-mono text-zinc-400">
             <span
               className={`w-1.5 h-1.5 rounded-full ${
                 card.isHighlighted ? "bg-red-500 animate-ping" : "bg-emerald-400"
@@ -299,35 +296,35 @@ function ServiceCard({
             <span>AKTİF</span>
           </div>
 
-          <span className="font-mono text-xs sm:text-sm font-bold px-3 py-1 rounded-xl bg-black/50 border border-zinc-800 text-zinc-300">
+          <span className="font-mono text-xs sm:text-sm font-bold px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-lg sm:rounded-xl bg-black/50 border border-zinc-800 text-zinc-300">
             [ {card.number} ]
           </span>
         </div>
       </div>
 
       {/* Main Content Body */}
-      <div className="my-auto py-4 sm:py-6 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-center">
+      <div className="my-auto py-3 sm:py-6 grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-10 items-center">
         {/* Left Column: Title & Description */}
-        <div className="lg:col-span-7 flex flex-col justify-center">
-          <h3 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white leading-[1.14]">
+        <div className="lg:col-span-7 flex flex-col justify-center text-center lg:text-left items-center lg:items-start">
+          <h3 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-extrabold tracking-tight text-white leading-[1.14]">
             {card.title}
           </h3>
 
-          <p className="mt-3.5 text-zinc-300 text-sm sm:text-[15px] leading-relaxed max-w-xl">
+          <p className="mt-2.5 sm:mt-3.5 text-zinc-300 text-xs sm:text-sm md:text-[15px] leading-relaxed max-w-xl line-clamp-3 sm:line-clamp-none">
             {card.description}
           </p>
 
-          <div className="mt-4 inline-flex items-center gap-2 text-xs font-mono text-red-400">
+          <div className="mt-2.5 sm:mt-4 inline-flex items-center gap-2 text-[11px] sm:text-xs font-mono text-red-400">
             <span className="text-zinc-600 font-bold">›</span>
             <span className="text-zinc-400">{card.subtitle}</span>
           </div>
 
           {/* Technology Badges */}
-          <div className="flex flex-wrap gap-2 mt-6">
+          <div className="flex flex-wrap items-center justify-center lg:justify-start gap-1.5 sm:gap-2 mt-4 sm:mt-6">
             {card.tags.map((tag, tIdx) => (
               <span
                 key={tIdx}
-                className="px-3 py-1.5 text-xs font-mono rounded-xl bg-zinc-950/80 border border-zinc-800 text-zinc-300 hover:border-zinc-600 hover:text-white transition"
+                className="px-2.5 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs font-mono rounded-lg sm:rounded-xl bg-zinc-950/80 border border-zinc-800 text-zinc-300 hover:border-zinc-600 hover:text-white transition"
               >
                 {tag}
               </span>
@@ -364,16 +361,16 @@ function ServiceCard({
       </div>
 
       {/* Bottom Footer Row */}
-      <div className="pt-4 sm:pt-5 border-t border-zinc-800/80 flex items-center justify-between">
-        <div className="flex items-center gap-2 text-xs font-mono text-zinc-400">
+      <div className="pt-3 sm:pt-5 border-t border-zinc-800/80 flex items-center justify-between">
+        <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-mono text-zinc-400">
           <Sparkles className="w-3.5 h-3.5 text-red-500" />
           <span>Katman 0{index + 1} / 0{total}</span>
         </div>
 
         <div className="inline-flex items-center gap-2 text-xs font-medium text-zinc-300 group-hover:text-white transition">
           <span className="hidden sm:inline">Detayları İncele</span>
-          <div className="w-8 h-8 rounded-full bg-zinc-800/80 border border-zinc-700/60 flex items-center justify-center group-hover:bg-red-600 group-hover:border-red-500 transition-colors">
-            <ArrowUpRight className="w-4 h-4 text-zinc-300 group-hover:text-white transition-colors" />
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-zinc-800/80 border border-zinc-700/60 flex items-center justify-center group-hover:bg-red-600 group-hover:border-red-500 transition-colors">
+            <ArrowUpRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-300 group-hover:text-white transition-colors" />
           </div>
         </div>
       </div>
@@ -388,9 +385,39 @@ export default function WhatIHelpSection() {
   const [scrollContainer, setScrollContainer] = useState<React.RefObject<HTMLElement> | undefined>(
     undefined
   );
+  const [calibratedPaddingBottom, setCalibratedPaddingBottom] = useState<number | null>(null);
 
-  // Fallback MotionValue to guarantee rock-solid scroll tracking across all environments:
-  // slide container in folder.tsx, standard full-page scroll, or Lenis smooth scroll
+  // Measure exact remaining distance to bottom when the last card is stacked at its sticky level
+  useEffect(() => {
+    const updatePadding = () => {
+      if (!cardsContainerRef.current) return;
+      const cards = cardsContainerRef.current.children;
+      if (!cards || cards.length === 0) return;
+      const lastCard = cards[cards.length - 1] as HTMLElement;
+      if (!lastCard) return;
+
+      const containerEl = scrollContainer?.current || (typeof window !== "undefined" ? window : null);
+      const containerH =
+        containerEl && containerEl !== window
+          ? (containerEl as HTMLElement).clientHeight
+          : window.innerHeight;
+
+      const vh = window.innerHeight * 0.1;
+      const clampTop = Math.min(Math.max(64, vh), 100);
+      const lastCardStickyTop = clampTop + (cards.length - 1) * 20;
+      const lastCardHeight = lastCard.offsetHeight;
+
+      // Distance from bottom of last card to bottom of viewport when stuck
+      const exactPadding = Math.max(0, containerH - lastCardStickyTop - lastCardHeight);
+      setCalibratedPaddingBottom(exactPadding);
+    };
+
+    updatePadding();
+    window.addEventListener("resize", updatePadding);
+    return () => window.removeEventListener("resize", updatePadding);
+  }, [scrollContainer]);
+
+  // Fallback MotionValue to guarantee rock-solid scroll tracking across all environments
   const manualProgress = useMotionValue(0);
 
   // Detect whether the section is housed in an overflow-y-auto slide container (e.g. folder.tsx)
@@ -414,11 +441,13 @@ export default function WhatIHelpSection() {
     offset: ["start start", "end end"],
   });
 
-  // Calculate high-fidelity relative scroll progress for overlapping cards
+  // Calculate high-fidelity relative scroll progress for overlapping cards with rAF throttling (no layout thrashing)
   useEffect(() => {
     const containerEl = scrollContainer?.current || (typeof window !== "undefined" ? window : null);
     const targetEl = cardsContainerRef.current;
     if (!containerEl || !targetEl) return;
+
+    let ticking = false;
 
     const handleScroll = () => {
       let currentScroll = 0;
@@ -443,10 +472,20 @@ export default function WhatIHelpSection() {
       }
     };
 
-    containerEl.addEventListener("scroll", handleScroll, { passive: true });
+    const throttledScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          handleScroll();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    containerEl.addEventListener("scroll", throttledScroll, { passive: true });
     handleScroll();
 
-    return () => containerEl.removeEventListener("scroll", handleScroll);
+    return () => containerEl.removeEventListener("scroll", throttledScroll);
   }, [scrollContainer, manualProgress]);
 
   // Sync active card indicator dynamically as the deck stacks
@@ -476,7 +515,7 @@ export default function WhatIHelpSection() {
     <section
       id="what-i-help"
       ref={sectionRef}
-      className="snap-section bg-[#080808] text-zinc-100 font-sans antialiased selection:bg-red-600 selection:text-white relative min-h-screen py-16 sm:py-24 px-4 sm:px-8 lg:px-12"
+      className="bg-[#080808] text-zinc-100 font-sans antialiased selection:bg-red-600 selection:text-white relative min-h-screen pt-12 sm:pt-20 pb-0 px-4 sm:px-8 lg:px-12"
     >
       {/* Ambient background glows: restricted to an absolute layer to prevent overflow clipping */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
@@ -487,16 +526,16 @@ export default function WhatIHelpSection() {
 
       <div className="relative z-10 max-w-6xl mx-auto">
         {/* Category breadcrumb */}
-        <div className="flex items-center gap-3 text-xs tracking-widest uppercase font-mono text-zinc-500 mb-8">
-          <span className="text-red-500 font-bold">03</span>
+        <div className="flex items-center justify-center lg:justify-start gap-2.5 sm:gap-3 text-[10px] sm:text-xs tracking-[0.14em] sm:tracking-widest uppercase font-mono text-zinc-500 mb-3 sm:mb-8 whitespace-nowrap">
+          <span className="text-red-500 font-bold">04</span>
           <span className="text-zinc-700">/</span>
           <span>YETKİNLİKLER & MİMARİ MÜHENDİSLİK</span>
         </div>
 
         {/* Section Header */}
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 pb-8 border-b border-zinc-850">
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 lg:gap-8 pb-6 sm:pb-8 border-b border-zinc-850 text-center lg:text-left items-center lg:items-end">
           <div className="max-w-2xl">
-            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.12]">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.12]">
               Hangi Alanda <br />
               Değer{" "}
               <span className="text-red-600 font-serif italic tracking-normal drop-shadow-[0_2px_20px_rgba(229,27,36,0.5)]">
@@ -504,16 +543,16 @@ export default function WhatIHelpSection() {
               </span>
             </h2>
 
-            <p className="mt-5 text-zinc-400 text-sm sm:text-base leading-relaxed">
+            <p className="mt-3.5 sm:mt-5 text-zinc-400 text-xs sm:text-sm md:text-base leading-relaxed">
               Modern web teknolojileri, ERP entegrasyonları ve ölçeklenebilir veritabanı mimarileriyle
               kurumsal ve bireysel projeleri uçtan uca hayata geçiriyorum.
             </p>
           </div>
 
           {/* Right Status Controls */}
-          <div className="flex flex-col sm:flex-row lg:flex-col items-start sm:items-center lg:items-end gap-4">
+          <div className="flex flex-col sm:flex-row lg:flex-col items-center lg:items-end gap-3 sm:gap-4">
             {/* Active Stack Counter Badge */}
-            <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-zinc-900/90 border border-zinc-800/90 font-mono text-xs text-zinc-400 select-none shadow-sm">
+            <div className="inline-flex items-center gap-2.5 sm:gap-3 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full bg-zinc-900/90 border border-zinc-800/90 font-mono text-xs text-zinc-400 select-none shadow-sm">
               <span className="text-zinc-500">AKTİF ALAN:</span>
               <span className="text-red-400 font-semibold transition-all duration-300">
                 0{activeCard} / 04
@@ -540,13 +579,13 @@ export default function WhatIHelpSection() {
         </div>
 
         {/* Technologies Arsenal */}
-        <div className="pt-6 pb-12">
-          <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-zinc-400 font-semibold mb-3.5">
+        <div className="pt-4 sm:pt-6 pb-6 sm:pb-12">
+          <div className="flex items-center justify-center lg:justify-start gap-2 text-xs uppercase tracking-widest text-zinc-400 font-semibold mb-3 sm:mb-3.5">
             <Cpu className="w-3.5 h-3.5 text-red-500" />
             <span>Kullandığım Teknolojiler & Araçlar</span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center justify-center lg:justify-start gap-1.5 sm:gap-2">
             {[
               { name: "Next.js", color: "hover:border-zinc-500" },
               { name: "React", color: "hover:border-sky-500/50 hover:text-sky-400" },
@@ -562,7 +601,7 @@ export default function WhatIHelpSection() {
             ].map((tech, i) => (
               <span
                 key={i}
-                className={`px-3 py-1.5 rounded-xl bg-zinc-900/90 border border-zinc-800 text-xs font-mono text-zinc-300 transition-colors duration-200 cursor-default ${tech.color}`}
+                className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl bg-zinc-900/90 border border-zinc-800 text-[11px] sm:text-xs font-mono text-zinc-300 transition-colors duration-200 cursor-default ${tech.color}`}
               >
                 {tech.name}
               </span>
@@ -571,10 +610,16 @@ export default function WhatIHelpSection() {
         </div>
 
         {/* Sticky Overlapping Cards Deck Container */}
-        {/* Dynamic height (~240vh) ensuring plenty of scroll travel for sequential stacking */}
+        {/* Calibrated padding-bottom keeps the cards neatly resting at their sticky level without scrolling upwards */}
         <div
           ref={cardsContainerRef}
-          className="relative min-h-[240vh] pb-[35vh] pt-4"
+          style={{
+            paddingBottom:
+              calibratedPaddingBottom !== null
+                ? `${calibratedPaddingBottom}px`
+                : "max(0px, calc(100vh - clamp(64px, 10vh, 100px) - 60px - 64vh))",
+          }}
+          className="relative pt-4"
         >
           {CARDS_DATA.map((card, idx) => (
             <ServiceCard

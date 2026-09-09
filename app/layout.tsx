@@ -19,7 +19,11 @@ export const metadata: Metadata = {
     "PostgreSQL",
   ],
   icons: {
-    icon: "/profilev2.png",
+    icon: [
+      { url: "/profile-round.png", sizes: "any" },
+    ],
+    shortcut: "/profile-round.png",
+    apple: "/apple-touch-icon.png",
   },
   openGraph: {
     title: "Burak İtik | Bilgisayar Mühendisi & Full-Stack Developer",

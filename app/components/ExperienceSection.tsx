@@ -40,27 +40,27 @@ export default function ExperienceSection() {
   return (
     <section
       id="experience"
-      className="snap-section bg-[#060608] text-neutral-100 font-sans antialiased selection:bg-[#dfc3a2] selection:text-black py-20 px-6 sm:px-10 lg:px-16 relative overflow-hidden"
+      className="snap-section bg-[#060608] text-neutral-100 font-sans antialiased selection:bg-[#dfc3a2] selection:text-black min-h-screen w-full max-w-[100vw] py-6 sm:py-10 lg:py-16 px-4 sm:px-8 lg:px-16 relative overflow-hidden flex flex-col justify-center"
     >
       {/* Ambient background glows */}
       <div className="absolute top-1/3 left-10 w-[500px] h-[500px] bg-[#dfc3a2]/5 blur-[160px] pointer-events-none rounded-full z-0"></div>
       <div className="absolute bottom-10 right-10 w-[600px] h-[600px] bg-red-950/10 blur-[180px] pointer-events-none rounded-full z-0"></div>
       <div className="absolute inset-0 bg-grid-pattern opacity-40 pointer-events-none z-0"></div>
 
-      <div className="relative z-10 max-w-7xl mx-auto flex flex-col justify-between">
+      <div className="relative z-10 max-w-7xl mx-auto w-full flex flex-col justify-between my-auto">
         {/* Section Header */}
-        <header className="w-full flex flex-col items-center justify-center mb-14 text-center">
-          <div className="flex items-center gap-3 text-xs tracking-[0.28em] text-[#dfc3a2] font-mono uppercase mb-2">
-            <span className="font-bold">04</span>
+        <header className="w-full flex flex-col items-center justify-center mb-6 sm:mb-10 lg:mb-12 text-center">
+          <div className="flex items-center justify-center gap-2 sm:gap-3 text-[10px] sm:text-xs tracking-[0.14em] sm:tracking-[0.28em] text-[#dfc3a2] font-mono uppercase mb-1.5 sm:mb-2 whitespace-nowrap">
+            <span className="font-bold text-[#dfc3a2]">05</span>
             <span className="text-[#dfc3a2]/50">//</span>
             <span className="text-zinc-400">KARİYER, EĞİTİM & VİZYON</span>
           </div>
 
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white uppercase">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white uppercase text-center">
             DENEYİMLER & AKADEMİK GEÇMİŞ
           </h2>
 
-          <p className="mt-4 text-zinc-400 text-sm sm:text-base max-w-2xl leading-relaxed">
+          <p className="mt-2.5 sm:mt-4 text-zinc-400 text-xs sm:text-sm md:text-base max-w-2xl leading-relaxed text-center">
             Kurumsal stajlardan saha sorumluluklarına, lisans eğitiminden ERP uzmanlık eğitimine kadar edindiğim tecrübeler.
           </p>
         </header>

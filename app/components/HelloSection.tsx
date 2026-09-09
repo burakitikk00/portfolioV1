@@ -1,122 +1,233 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
-import { RotateCcw, ArrowDown } from "lucide-react";
+import { RotateCcw, ArrowDown, Volume2, VolumeX } from "lucide-react";
 
 export default function HelloSection() {
   const [animKey, setAnimKey] = useState(0);
   const [showPrompt, setShowPrompt] = useState(false);
+  const [isSoundEnabled, setIsSoundEnabled] = useState(true);
+  const isSoundEnabledRef = useRef(true);
+  const audioContextRef = useRef<AudioContext | null>(null);
+
+  useEffect(() => {
+    isSoundEnabledRef.current = isSoundEnabled;
+  }, [isSoundEnabled]);
+
+  /**
+   * Web Audio Synthesizer for warm nostalgic Macintosh chime
+   */
+  const playChime = useCallback(() => {
+    if (!isSoundEnabledRef.current) return;
+    try {
+      if (typeof window === "undefined") return;
+      const AudioContextClass =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!AudioContextClass) return;
+
+      if (!audioContextRef.current) {
+        audioContextRef.current = new AudioContextClass();
+      }
+      const ctx = audioContextRef.current;
+      if (ctx.state === "suspended") {
+        ctx.resume();
+      }
+
+      const now = ctx.currentTime;
+      // Classic C5 major chord arpeggio notes [C5, E5, G5, C6]
+      const notes = [523.25, 659.25, 783.99, 1046.50];
+
+      notes.forEach((freq, idx) => {
+        if (!ctx) return;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+
+        gain.gain.setValueAtTime(0.001, now + idx * 0.08);
+        gain.gain.exponentialRampToValueAtTime(0.06, now + idx * 0.08 + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.08 + 1.2);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(now + idx * 0.08);
+        osc.stop(now + idx * 0.08 + 1.3);
+      });
+    } catch (err) {
+      console.warn("Audio play restricted by browser policy:", err);
+    }
+  }, []);
+
+  const toggleSound = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsSoundEnabled((prev) => {
+      const next = !prev;
+      if (next) {
+        setTimeout(() => {
+          playChime();
+        }, 50);
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowPrompt(true);
-    }, 3200);
+    }, 2800);
     return () => clearTimeout(timer);
   }, [animKey]);
 
   const handleReplay = useCallback((e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
+    playChime();
     setShowPrompt(false);
     setAnimKey((prev) => prev + 1);
-  }, []);
+  }, [playChime]);
 
-  const handleScrollToNext = useCallback(() => {
-    const nextSection = document.getElementById("creative-dev");
-    if (nextSection) {
-      nextSection.scrollIntoView({ behavior: "smooth" });
-    }
-  }, []);
+  const handleNavigateToNext = useCallback(
+    (e?: React.MouseEvent) => {
+      if (e) e.stopPropagation();
+      playChime();
 
+      const win = window as unknown as {
+        __portfolioTriggerSlideChange?: ((dir: number) => void) | null;
+        __portfolioGoToSlide?: ((idx: number) => void) | null;
+      };
+
+      if (typeof win.__portfolioTriggerSlideChange === "function") {
+        win.__portfolioTriggerSlideChange(1);
+      } else if (typeof win.__portfolioGoToSlide === "function") {
+        win.__portfolioGoToSlide(1);
+      } else {
+        const nextSection = document.getElementById("creative-dev");
+        if (nextSection) {
+          nextSection.scrollIntoView({ behavior: "smooth" });
+        }
+      }
+    },
+    [playChime]
+  );
+
+  // Expose playChime globally so folder.tsx can trigger on slide navigation
   useEffect(() => {
-    let isTransitioning = false;
-
-    const triggerNext = () => {
-      if (isTransitioning) return;
-      // Only trigger if we are currently at the top (Hello section)
-      const currentScroll = window.scrollY || window.pageYOffset || 0;
-      if (currentScroll < 120) {
-        isTransitioning = true;
-        handleScrollToNext();
-        setTimeout(() => {
-          isTransitioning = false;
-        }, 1200);
+    if (typeof window !== "undefined") {
+      (window as unknown as { __portfolioPlayHelloChime?: () => void }).__portfolioPlayHelloChime = playChime;
+    }
+    return () => {
+      if (typeof window !== "undefined") {
+        (window as unknown as { __portfolioPlayHelloChime?: () => void }).__portfolioPlayHelloChime = undefined;
       }
     };
+  }, [playChime]);
 
-    // 1. Mouse wheel / trackpad scroll
+  // Scroll down detection to trigger chime on this page
+  useEffect(() => {
+    let lastWheelTime = 0;
     const handleWheel = (e: WheelEvent) => {
-      if (e.deltaY > 15) {
-        triggerNext();
+      if (e.deltaY > 15 && Date.now() - lastWheelTime > 1200) {
+        lastWheelTime = Date.now();
+        playChime();
       }
     };
 
-    // 2. Touch gesture (swipe up / scroll down)
     let touchStartY = 0;
     const handleTouchStart = (e: TouchEvent) => {
       touchStartY = e.touches[0].clientY;
     };
-    const handleTouchMove = (e: TouchEvent) => {
-      const touchY = e.touches[0].clientY;
-      const diff = touchStartY - touchY;
-      if (diff > 35) {
-        triggerNext();
-      }
-    };
-
-    // 3. Keyboard controls (Space, ArrowDown, PageDown)
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === "Space" || e.key === "ArrowDown" || e.key === "PageDown") {
-        const currentScroll = window.scrollY || window.pageYOffset || 0;
-        if (currentScroll < 120) {
-          e.preventDefault();
-          triggerNext();
-        }
-      } else if (e.key.toLowerCase() === "r") {
-        handleReplay();
+    const handleTouchEnd = (e: TouchEvent) => {
+      const diffY = touchStartY - e.changedTouches[0].clientY;
+      if (diffY > 35) {
+        playChime();
       }
     };
 
     window.addEventListener("wheel", handleWheel, { passive: true });
     window.addEventListener("touchstart", handleTouchStart, { passive: true });
-    window.addEventListener("touchmove", handleTouchMove, { passive: true });
-    window.addEventListener("keydown", handleKeyDown);
-
+    window.addEventListener("touchend", handleTouchEnd, { passive: true });
     return () => {
       window.removeEventListener("wheel", handleWheel);
       window.removeEventListener("touchstart", handleTouchStart);
-      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, [playChime]);
+
+  useEffect(() => {
+    // Keyboard controls (R for replay)
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === "Space" || e.key === " ") {
+        e.preventDefault();
+        return;
+      }
+      if (e.key.toLowerCase() === "r") {
+        handleReplay();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [handleScrollToNext, handleReplay]);
+  }, [handleReplay]);
 
   return (
     <section
       id="hello"
-      className="snap-section relative w-full h-screen flex flex-col items-center justify-center bg-[#050505] text-[#dfc3a2] bg-grain select-none overflow-hidden"
+      className="snap-section relative w-full max-w-[100vw] h-screen flex flex-col items-center justify-center bg-[#050505] text-[#dfc3a2] bg-grain select-none overflow-hidden"
     >
       {/* Top System Minimal Bar */}
-      <header className="absolute top-0 inset-x-0 h-16 px-6 md:px-12 flex items-center justify-between text-xs tracking-widest uppercase text-[#dfc3a2]/40 z-20">
-        <div className="flex items-center space-x-3">
-          <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span className="font-light tracking-wider text-[11px] text-zinc-400">
+      <header className="absolute top-0 inset-x-0 h-14 sm:h-16 px-4 sm:px-6 md:px-12 flex items-center justify-between text-[11px] sm:text-xs tracking-widest uppercase text-[#dfc3a2]/40 z-20">
+        <div className="flex items-center space-x-2 sm:space-x-3">
+          <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.7)]"></span>
+          <span className="font-light tracking-wider text-[10px] sm:text-[11px] text-zinc-400">
             Sistem Aktif · Portfolyo
           </span>
         </div>
-        <button
-          onClick={handleReplay}
-          className="hover:text-zinc-200 transition-colors duration-200 cursor-pointer flex items-center space-x-1.5 opacity-60 hover:opacity-100"
-          title="Animasyonu Yeniden Oynat (veya R tuşuna basın)"
-        >
-          <RotateCcw className="w-3.5 h-3.5" />
-          <span className="text-[10px] tracking-normal capitalize">tekrar oynat</span>
-        </button>
+
+        <div className="flex items-center space-x-2.5 sm:space-x-3 pointer-events-auto">
+          {/* Audio / Chime Toggle */}
+          <button
+            onClick={toggleSound}
+            aria-label="Ses Kontrolü"
+            className={`flex items-center space-x-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full border transition-all duration-200 cursor-pointer ${
+              isSoundEnabled
+                ? "border-neutral-800 bg-neutral-900/60 text-[#dfc3a2] hover:border-[#dfc3a2]/40 hover:bg-neutral-800/80 shadow-[0_0_12px_rgba(223,195,162,0.12)]"
+                : "border-neutral-800/40 bg-neutral-900/30 text-neutral-500 opacity-60 hover:opacity-100"
+            }`}
+            title={isSoundEnabled ? "Sesi Kapat (Chime Açık)" : "Sesi Aç (Chime Kapalı)"}
+          >
+            {isSoundEnabled ? (
+              <Volume2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#dfc3a2]" />
+            ) : (
+              <VolumeX className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-neutral-500" />
+            )}
+            <span className="text-[9px] sm:text-[10px] font-mono tracking-wide lowercase">
+              {isSoundEnabled ? "ses açık" : "sessiz"}
+            </span>
+          </button>
+
+          {/* Replay Animation Button */}
+          <button
+            onClick={handleReplay}
+            aria-label="Animasyonu Yeniden Oynat"
+            className="hover:text-zinc-200 transition-colors duration-200 cursor-pointer flex items-center space-x-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full border border-neutral-800 bg-neutral-900/40 hover:bg-neutral-800/80 opacity-70 hover:opacity-100"
+            title="Animasyonu Yeniden Oynat (veya R tuşuna basın)"
+          >
+            <RotateCcw className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+            <span className="text-[9px] sm:text-[10px] tracking-normal font-mono lowercase">tekrar oynat</span>
+          </button>
+        </div>
       </header>
 
       {/* Center Stage: The Classic "hello" SVG Canvas */}
       <div
-        onClick={handleScrollToNext}
-        className="relative z-10 w-full max-w-4xl px-6 flex flex-col items-center justify-center cursor-pointer transition-transform duration-700 active:scale-95"
+        onClick={handleNavigateToNext}
+        className="relative z-10 w-full max-w-4xl px-4 sm:px-6 flex flex-col items-center justify-center cursor-pointer transition-transform duration-700 active:scale-95"
+        title="Giriş yapmak için tıklayın"
       >
         <div
           key={animKey}
@@ -186,24 +297,24 @@ export default function HelloSection() {
       </div>
 
       {/* Ambient Subtle Bottom Controls / Status Indicator */}
-      <footer className="absolute bottom-10 inset-x-0 flex flex-col items-center justify-center space-y-3 pointer-events-auto">
+      <footer className="absolute bottom-6 sm:bottom-10 inset-x-0 px-4 flex flex-col items-center justify-center space-y-3 pointer-events-auto">
         <motion.div
-          animate={{ opacity: showPrompt ? 1 : 0 }}
+          animate={{ opacity: showPrompt ? 1 : 0.7 }}
           transition={{ duration: 0.8 }}
-          onClick={handleScrollToNext}
-          className="text-center cursor-pointer group"
+          onClick={handleNavigateToNext}
+          className="text-center cursor-pointer group flex flex-col items-center space-y-2.5"
+          title="Sonraki bölüme geçmek için tıklayın"
         >
-          <div className="flex flex-col items-center gap-1.5">
-            <p className="text-xs font-normal tracking-[0.25em] text-[#dfc3a2]/60 group-hover:text-[#dfc3a2] transition-colors uppercase flex items-center gap-2">
+          {/* Illuminated Interactive Indicator Dot with ripple ping */}
+          <div className="relative flex items-center justify-center">
+            <span className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded-full bg-[#f3e7d5] opacity-90 shadow-[0_0_12px_#dfc3a2] group-hover:scale-125 transition-transform duration-300"></span>
+            <span className="absolute w-5 sm:w-6 h-5 sm:h-6 rounded-full border border-[#dfc3a2]/40 animate-ping pointer-events-none"></span>
+          </div>
+
+          <div className="flex flex-col items-center gap-1">
+            <p className="text-[10.5px] sm:text-xs font-mono font-normal tracking-[0.16em] sm:tracking-[0.25em] text-[#dfc3a2]/70 group-hover:text-[#dfc3a2] transition-colors uppercase flex items-center gap-1.5 sm:gap-2">
               <span>Aşağı kaydırın veya giriş için tıklayın</span>
-              <ArrowDown className="w-3.5 h-3.5 group-hover:translate-y-1 transition-transform animate-bounce" />
-            </p>
-            <p className="text-[10px] tracking-widest uppercase text-[#dfc3a2]/35 flex items-center gap-1">
-              <span>veya</span>
-              <kbd className="px-1.5 py-0.5 border border-[#dfc3a2]/25 rounded text-[9px] bg-white/5 font-mono text-zinc-300">
-                Boşluk (Space)
-              </kbd>
-              <span>tuşuna basın</span>
+              <ArrowDown className="w-3.5 h-3.5 group-hover:translate-y-1 transition-transform animate-bounce text-[#dfc3a2]" />
             </p>
           </div>
         </motion.div>
